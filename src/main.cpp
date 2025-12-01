@@ -65,10 +65,10 @@ private:
 
     void initVulkan() {
         // 1. Créer la fenêtre
-        m_window = new Window(WIDTH, HEIGHT, "Vulkan Triangle");
+        m_window = new Window(WIDTH, HEIGHT, "Tesseract");
 
         // 2. Créer l'instance Vulkan
-        m_instance = new Instance("Hello Triangle", enableValidationLayers);
+        m_instance = new Instance("Tesseract", enableValidationLayers);
 
         // 3. Créer la surface
         m_surface = m_window->createSurface(m_instance->getHandle());
