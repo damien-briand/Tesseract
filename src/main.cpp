@@ -7,6 +7,8 @@
 #include "rendering/CommandBuffer.hpp"
 #include "rendering/Renderer.hpp"
 #include "rendering/Vertex.hpp"
+#include "rendering/VertexBuffer.hpp"
+#include "rendering/IndexBuffer.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -24,11 +26,17 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-// Données de test : un triangle avec des couleurs
+// Données de test : un carré coloré avec indices
 const std::vector<Vertex> vertices = {
-    {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},  // Sommet haut - Rouge
-    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},   // Sommet bas-droite - Vert
-    {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}   // Sommet bas-gauche - Bleu
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},  // Coin haut-gauche - Rouge
+    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},   // Coin haut-droit - Vert
+    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},    // Coin bas-droit - Bleu
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}    // Coin bas-gauche - Blanc
+};
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2,  // Premier triangle (haut-gauche, haut-droit, bas-droit)
+    2, 3, 0   // Deuxième triangle (bas-droit, bas-gauche, haut-gauche)
 };
 
 class Application {
@@ -51,6 +59,8 @@ private:
     RenderPass* m_renderPass = nullptr;
     Pipeline* m_pipeline = nullptr;
     CommandBuffer* m_commandBuffer = nullptr;
+    VertexBuffer* m_vertexBuffer = nullptr;
+    IndexBuffer* m_indexBuffer = nullptr;
     Renderer* m_renderer = nullptr;
 
     void initVulkan() {
@@ -87,7 +97,13 @@ private:
         // 9. Créer les command buffers
         m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
-        // 10. Créer le renderer (gère la synchronisation et le rendu)
+        // 10. Créer le vertex buffer
+        m_vertexBuffer = new VertexBuffer(m_device, vertices);
+
+        // 11. Créer l'index buffer
+        m_indexBuffer = new IndexBuffer(m_device, indices);
+
+        // 12. Créer le renderer (gère la synchronisation et le rendu)
         m_renderer = new Renderer(
             m_device,
             m_swapChain,
@@ -95,6 +111,8 @@ private:
             m_renderPass,
             m_pipeline,
             m_commandBuffer,
+            m_vertexBuffer,
+            m_indexBuffer,
             MAX_FRAMES_IN_FLIGHT
         );
 
@@ -114,7 +132,9 @@ private:
         // L'ordre de destruction est important !
         // On détruit dans l'ordre inverse de la création
 
-        delete m_renderer;           // 10. Renderer (sync objects)
+        delete m_renderer;           // 12. Renderer (sync objects)
+        delete m_indexBuffer;        // 11. Index buffer
+        delete m_vertexBuffer;       // 10. Vertex buffer
         delete m_commandBuffer;      // 9.  Command buffers
         delete m_pipeline;           // 8.  Pipeline
         delete m_renderPass;         // 7.  Render pass (après swapchain car framebuffers)

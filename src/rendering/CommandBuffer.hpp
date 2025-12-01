@@ -7,6 +7,8 @@ class Device;
 class RenderPass;
 class Pipeline;
 class SwapChain;
+class VertexBuffer;
+class IndexBuffer;
 
 class CommandBuffer {
 public:
@@ -25,7 +27,8 @@ public:
     // Méthodes
     void reset(uint32_t index);
     void record(uint32_t index, uint32_t imageIndex, RenderPass* renderPass, 
-                Pipeline* pipeline, SwapChain* swapChain);
+                Pipeline* pipeline, SwapChain* swapChain, VertexBuffer* vertexBuffer,
+                IndexBuffer* indexBuffer);
 
 private:
     Device* m_device;

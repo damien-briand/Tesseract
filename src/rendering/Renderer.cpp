@@ -2,6 +2,8 @@
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
 #include "CommandBuffer.hpp"
+#include "VertexBuffer.hpp"
+#include "IndexBuffer.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include "../core/Window.hpp"
@@ -10,13 +12,16 @@
 
 Renderer::Renderer(Device* device, SwapChain* swapChain, Window* window,
                    RenderPass* renderPass, Pipeline* pipeline,
-                   CommandBuffer* commandBuffer, uint32_t maxFramesInFlight)
+                   CommandBuffer* commandBuffer, VertexBuffer* vertexBuffer,
+                   IndexBuffer* indexBuffer, uint32_t maxFramesInFlight)
     : m_device(device)
     , m_swapChain(swapChain)
     , m_window(window)
     , m_renderPass(renderPass)
     , m_pipeline(pipeline)
     , m_commandBuffer(commandBuffer)
+    , m_vertexBuffer(vertexBuffer)
+    , m_indexBuffer(indexBuffer)
     , m_maxFramesInFlight(maxFramesInFlight)
     , m_currentFrame(0)
 {
@@ -54,7 +59,8 @@ void Renderer::drawFrame() {
     vkResetFences(m_device->getLogicalDevice(), 1, &m_inFlightFences[m_currentFrame]);
 
     m_commandBuffer->reset(m_currentFrame);
-    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, m_swapChain);
+    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, m_swapChain, 
+                           m_vertexBuffer, m_indexBuffer);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

@@ -10,12 +10,15 @@ class RenderPass;
 class Pipeline;
 class CommandBuffer;
 class Window;
+class VertexBuffer;
+class IndexBuffer;
 
 class Renderer {
 public:
     Renderer(Device* device, SwapChain* swapChain, Window* window, 
              RenderPass* renderPass, Pipeline* pipeline, 
-             CommandBuffer* commandBuffer, uint32_t maxFramesInFlight);
+             CommandBuffer* commandBuffer, VertexBuffer* vertexBuffer,
+             IndexBuffer* indexBuffer, uint32_t maxFramesInFlight);
     ~Renderer();
 
     // Suppression de la copie
@@ -33,6 +36,8 @@ private:
     RenderPass* m_renderPass;
     Pipeline* m_pipeline;
     CommandBuffer* m_commandBuffer;
+    VertexBuffer* m_vertexBuffer;
+    IndexBuffer* m_indexBuffer;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;

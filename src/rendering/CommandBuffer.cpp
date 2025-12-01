@@ -1,6 +1,8 @@
 #include "CommandBuffer.hpp"
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
+#include "VertexBuffer.hpp"
+#include "IndexBuffer.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include <stdexcept>
@@ -24,7 +26,8 @@ void CommandBuffer::reset(uint32_t index) {
 }
 
 void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass* renderPass,
-                           Pipeline* pipeline, SwapChain* swapChain)
+                           Pipeline* pipeline, SwapChain* swapChain, VertexBuffer* vertexBuffer,
+                           IndexBuffer* indexBuffer)
 {
     VkCommandBuffer commandBuffer = m_commandBuffers[index];
 
@@ -64,7 +67,14 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass* rend
     scissor.extent = swapChain->getExtent();
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    // Binder le vertex buffer
+    vertexBuffer->bind(commandBuffer);
+
+    // NOUVEAU : Binder l'index buffer
+    indexBuffer->bind(commandBuffer);
+
+    // MODIFIÉ : Utiliser vkCmdDrawIndexed au lieu de vkCmdDraw
+    vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
