@@ -31,10 +31,10 @@ const bool enableValidationLayers = true;
 
 // Données de test : un carré coloré avec indices
 const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},  // Coin haut-gauche - Rouge
-    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},   // Coin haut-droit - Vert
-    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},    // Coin bas-droit - Bleu
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}    // Coin bas-gauche - Blanc
+    {{-0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}},   // Coin haut-gauche - Rouge
+    {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},    // Coin haut-droit - Vert
+    {{0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},   // Coin bas-droit - Bleu
+    {{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}   // Coin bas-gauche - Blanc
 };
 
 const std::vector<uint16_t> indices = {
