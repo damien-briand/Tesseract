@@ -2,18 +2,24 @@
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
 #include "CommandBuffer.hpp"
-#include "VertexBuffer.hpp"
-#include "IndexBuffer.hpp"
+#include "Buffer/VertexBuffer.hpp"
+#include "Buffer/IndexBuffer.hpp"
+#include "Buffer/UniformBuffer.hpp"
+#include "Buffer/UniformBufferObject.hpp"
+#include "Descriptor/DescriptorPool.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include "../core/Window.hpp"
 #include <stdexcept>
 #include <limits>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 Renderer::Renderer(Device* device, SwapChain* swapChain, Window* window,
                    RenderPass* renderPass, Pipeline* pipeline,
                    CommandBuffer* commandBuffer, VertexBuffer* vertexBuffer,
-                   IndexBuffer* indexBuffer, uint32_t maxFramesInFlight)
+                   IndexBuffer* indexBuffer, UniformBuffer* uniformBuffer,
+                   DescriptorPool* descriptorPool, uint32_t maxFramesInFlight)
     : m_device(device)
     , m_swapChain(swapChain)
     , m_window(window)
@@ -22,8 +28,11 @@ Renderer::Renderer(Device* device, SwapChain* swapChain, Window* window,
     , m_commandBuffer(commandBuffer)
     , m_vertexBuffer(vertexBuffer)
     , m_indexBuffer(indexBuffer)
+    , m_uniformBuffer(uniformBuffer)
+    , m_descriptorPool(descriptorPool)
     , m_maxFramesInFlight(maxFramesInFlight)
     , m_currentFrame(0)
+    , m_startTime(std::chrono::high_resolution_clock::now())
 {
     createSyncObjects();
 }
@@ -58,9 +67,12 @@ void Renderer::drawFrame() {
 
     vkResetFences(m_device->getLogicalDevice(), 1, &m_inFlightFences[m_currentFrame]);
 
+    // NOUVEAU : Mettre à jour le uniform buffer
+    updateUniformBuffer(m_currentFrame);
+
     m_commandBuffer->reset(m_currentFrame);
     m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, m_swapChain, 
-                           m_vertexBuffer, m_indexBuffer);
+                           m_vertexBuffer, m_indexBuffer, m_descriptorPool);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -133,4 +145,29 @@ void Renderer::createSyncObjects() {
 void Renderer::recreateSwapChain() {
     m_device->waitIdle();
     m_swapChain->recreate(m_renderPass->getHandle());
+}
+
+void Renderer::updateUniformBuffer(uint32_t currentFrame) {
+    // Calculer le temps écoulé depuis le démarrage
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - m_startTime).count();
+
+    UniformBufferObject ubo{};
+    
+    // Matrice Model : rotation autour de l'axe Z
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    
+    // Matrice View : caméra regardant vers l'origine depuis (2,2,2)
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    
+    // Matrice Projection : perspective avec FOV de 45°
+    ubo.proj = glm::perspective(glm::radians(45.0f), 
+                                m_swapChain->getExtent().width / (float)m_swapChain->getExtent().height, 
+                                0.1f, 10.0f);
+    
+    // GLM a été conçu pour OpenGL où Y est inversé
+    ubo.proj[1][1] *= -1;
+
+    // Copier les données dans le uniform buffer
+    m_uniformBuffer->updateUniformBuffer(currentFrame, ubo);
 }

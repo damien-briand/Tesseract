@@ -4,11 +4,14 @@
 #include "core/SwapChain.hpp"
 #include "rendering/RenderPass.hpp"
 #include "rendering/Pipeline.hpp"
-#include "rendering/CommandBuffer.hpp"
 #include "rendering/Renderer.hpp"
 #include "rendering/Vertex.hpp"
-#include "rendering/VertexBuffer.hpp"
-#include "rendering/IndexBuffer.hpp"
+#include "rendering/CommandBuffer.hpp"
+#include "rendering/Buffer/VertexBuffer.hpp"
+#include "rendering/Buffer/IndexBuffer.hpp"
+#include "rendering/Buffer/UniformBuffer.hpp"
+#include "rendering/Descriptor/DescriptorSetLayout.hpp"
+#include "rendering/Descriptor/DescriptorPool.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -57,10 +60,13 @@ private:
 
     // Rendering objects
     RenderPass* m_renderPass = nullptr;
+    DescriptorSetLayout* m_descriptorSetLayout = nullptr;
     Pipeline* m_pipeline = nullptr;
     CommandBuffer* m_commandBuffer = nullptr;
     VertexBuffer* m_vertexBuffer = nullptr;
     IndexBuffer* m_indexBuffer = nullptr;
+    UniformBuffer* m_uniformBuffer = nullptr;
+    DescriptorPool* m_descriptorPool = nullptr;
     Renderer* m_renderer = nullptr;
 
     void initVulkan() {
@@ -85,25 +91,36 @@ private:
         // 7. Créer les framebuffers
         m_swapChain->createFramebuffers(m_renderPass->getHandle());
 
-        // 8. Créer le pipeline graphique
+        // 8. Créer le descriptor set layout
+        m_descriptorSetLayout = new DescriptorSetLayout(m_device);
+
+        // 9. Créer le pipeline graphique (avec descriptor set layout)
         m_pipeline = new Pipeline(
             m_device,
             m_renderPass,
+            m_descriptorSetLayout,
             m_swapChain->getExtent(),
             SHADERS_PATH + "vert.spv",
             SHADERS_PATH + "frag.spv"
         );
 
-        // 9. Créer les command buffers
+        // 10. Créer les command buffers
         m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
-        // 10. Créer le vertex buffer
+        // 11. Créer le vertex buffer
         m_vertexBuffer = new VertexBuffer(m_device, vertices);
 
-        // 11. Créer l'index buffer
+        // 12. Créer l'index buffer
         m_indexBuffer = new IndexBuffer(m_device, indices);
 
-        // 12. Créer le renderer (gère la synchronisation et le rendu)
+        // 13. Créer les uniform buffers
+        m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
+
+        // 14. Créer le descriptor pool et les descriptor sets
+        m_descriptorPool = new DescriptorPool(m_device, m_descriptorSetLayout, 
+                                              m_uniformBuffer, MAX_FRAMES_IN_FLIGHT);
+
+        // 15. Créer le renderer (gère la synchronisation et le rendu)
         m_renderer = new Renderer(
             m_device,
             m_swapChain,
@@ -113,6 +130,8 @@ private:
             m_commandBuffer,
             m_vertexBuffer,
             m_indexBuffer,
+            m_uniformBuffer,
+            m_descriptorPool,
             MAX_FRAMES_IN_FLIGHT
         );
 
@@ -132,11 +151,14 @@ private:
         // L'ordre de destruction est important !
         // On détruit dans l'ordre inverse de la création
 
-        delete m_renderer;           // 12. Renderer (sync objects)
-        delete m_indexBuffer;        // 11. Index buffer
-        delete m_vertexBuffer;       // 10. Vertex buffer
-        delete m_commandBuffer;      // 9.  Command buffers
-        delete m_pipeline;           // 8.  Pipeline
+        delete m_renderer;           // 15. Renderer (sync objects)
+        delete m_descriptorPool;     // 14. Descriptor pool
+        delete m_uniformBuffer;      // 13. Uniform buffers
+        delete m_indexBuffer;        // 12. Index buffer
+        delete m_vertexBuffer;       // 11. Vertex buffer
+        delete m_commandBuffer;      // 10. Command buffers
+        delete m_pipeline;           // 9.  Pipeline
+        delete m_descriptorSetLayout;// 8.  Descriptor set layout
         delete m_renderPass;         // 7.  Render pass (après swapchain car framebuffers)
         delete m_swapChain;          // 6.  SwapChain
         

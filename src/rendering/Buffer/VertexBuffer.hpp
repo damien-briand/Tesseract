@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Buffer.hpp"
-#include "Vertex.hpp"
+#include "../Vertex.hpp"
 #include <vector>
 
 class Device;

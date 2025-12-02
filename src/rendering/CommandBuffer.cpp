@@ -1,40 +1,44 @@
 #include "CommandBuffer.hpp"
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
-#include "VertexBuffer.hpp"
-#include "IndexBuffer.hpp"
+#include "Buffer/VertexBuffer.hpp"
+#include "Buffer/IndexBuffer.hpp"
+#include "Descriptor/DescriptorPool.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include <stdexcept>
 
-CommandBuffer::CommandBuffer(Device* device, uint32_t maxFramesInFlight)
-    : m_device(device)
-    , m_commandPool(VK_NULL_HANDLE)
+CommandBuffer::CommandBuffer(Device *device, uint32_t maxFramesInFlight)
+    : m_device(device), m_commandPool(VK_NULL_HANDLE)
 {
     createCommandPool();
     createCommandBuffers(maxFramesInFlight);
 }
 
-CommandBuffer::~CommandBuffer() {
-    if (m_commandPool != VK_NULL_HANDLE) {
+CommandBuffer::~CommandBuffer()
+{
+    if (m_commandPool != VK_NULL_HANDLE)
+    {
         vkDestroyCommandPool(m_device->getLogicalDevice(), m_commandPool, nullptr);
     }
 }
 
-void CommandBuffer::reset(uint32_t index) {
+void CommandBuffer::reset(uint32_t index)
+{
     vkResetCommandBuffer(m_commandBuffers[index], 0);
 }
 
-void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass* renderPass,
-                           Pipeline* pipeline, SwapChain* swapChain, VertexBuffer* vertexBuffer,
-                           IndexBuffer* indexBuffer)
+void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *renderPass,
+                           Pipeline *pipeline, SwapChain *swapChain, VertexBuffer *vertexBuffer,
+                           IndexBuffer *indexBuffer, DescriptorPool *descriptorPool)
 {
     VkCommandBuffer commandBuffer = m_commandBuffers[index];
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to begin recording command buffer!");
     }
 
@@ -70,20 +74,26 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass* rend
     // Binder le vertex buffer
     vertexBuffer->bind(commandBuffer);
 
-    // NOUVEAU : Binder l'index buffer
+    // Binder l'index buffer
     indexBuffer->bind(commandBuffer);
 
-    // MODIFIÉ : Utiliser vkCmdDrawIndexed au lieu de vkCmdDraw
+    // NOUVEAU : Binder le descriptor set
+    VkDescriptorSet descriptorSet = descriptorPool->getDescriptorSet(index);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
+
+    // Draw
     vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
-    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to record command buffer!");
     }
 }
 
-void CommandBuffer::createCommandPool() {
+void CommandBuffer::createCommandPool()
+{
     QueueFamilyIndices queueFamilyIndices = m_device->getQueueFamilies();
 
     VkCommandPoolCreateInfo poolInfo{};
@@ -91,12 +101,14 @@ void CommandBuffer::createCommandPool() {
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-    if (vkCreateCommandPool(m_device->getLogicalDevice(), &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS) {
+    if (vkCreateCommandPool(m_device->getLogicalDevice(), &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to create command pool!");
     }
 }
 
-void CommandBuffer::createCommandBuffers(uint32_t count) {
+void CommandBuffer::createCommandBuffers(uint32_t count)
+{
     m_commandBuffers.resize(count);
 
     VkCommandBufferAllocateInfo allocInfo{};
@@ -105,7 +117,8 @@ void CommandBuffer::createCommandBuffers(uint32_t count) {
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = count;
 
-    if (vkAllocateCommandBuffers(m_device->getLogicalDevice(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(m_device->getLogicalDevice(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to allocate command buffers!");
     }
 }

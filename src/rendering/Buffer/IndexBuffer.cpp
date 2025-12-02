@@ -1,5 +1,5 @@
 #include "IndexBuffer.hpp"
-#include "../core/Device.hpp"
+#include "../../core/Device.hpp"
 #include <iostream>
 
 IndexBuffer::IndexBuffer(Device* device, const std::vector<uint16_t>& indices)

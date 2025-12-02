@@ -9,6 +9,7 @@ class Pipeline;
 class SwapChain;
 class VertexBuffer;
 class IndexBuffer;
+class DescriptorPool;
 
 class CommandBuffer {
 public:
@@ -28,7 +29,7 @@ public:
     void reset(uint32_t index);
     void record(uint32_t index, uint32_t imageIndex, RenderPass* renderPass, 
                 Pipeline* pipeline, SwapChain* swapChain, VertexBuffer* vertexBuffer,
-                IndexBuffer* indexBuffer);
+                IndexBuffer* indexBuffer, DescriptorPool* descriptorPool);
 
 private:
     Device* m_device;

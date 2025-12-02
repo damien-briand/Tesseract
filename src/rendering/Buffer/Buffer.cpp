@@ -1,5 +1,5 @@
 #include "Buffer.hpp"
-#include "../core/Device.hpp"
+#include "../../core/Device.hpp"
 #include <stdexcept>
 #include <cstring>
 

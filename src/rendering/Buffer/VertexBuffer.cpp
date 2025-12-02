@@ -1,5 +1,6 @@
 #include "VertexBuffer.hpp"
-#include "../core/Device.hpp"
+#include "Buffer.hpp"
+#include "../../core/Device.hpp"
 #include <iostream>
 
 VertexBuffer::VertexBuffer(Device* device, const std::vector<Vertex>& vertices)

@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 #include <cstdint>
+#include <chrono>
 
 class Device;
 class SwapChain;
@@ -12,13 +13,16 @@ class CommandBuffer;
 class Window;
 class VertexBuffer;
 class IndexBuffer;
+class UniformBuffer;
+class DescriptorPool;
 
 class Renderer {
 public:
     Renderer(Device* device, SwapChain* swapChain, Window* window, 
              RenderPass* renderPass, Pipeline* pipeline, 
              CommandBuffer* commandBuffer, VertexBuffer* vertexBuffer,
-             IndexBuffer* indexBuffer, uint32_t maxFramesInFlight);
+             IndexBuffer* indexBuffer, UniformBuffer* uniformBuffer,
+             DescriptorPool* descriptorPool, uint32_t maxFramesInFlight);
     ~Renderer();
 
     // Suppression de la copie
@@ -38,6 +42,8 @@ private:
     CommandBuffer* m_commandBuffer;
     VertexBuffer* m_vertexBuffer;
     IndexBuffer* m_indexBuffer;
+    UniformBuffer* m_uniformBuffer;
+    DescriptorPool* m_descriptorPool;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;
@@ -46,6 +52,9 @@ private:
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
 
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime;
+
     void createSyncObjects();
     void recreateSwapChain();
+    void updateUniformBuffer(uint32_t currentFrame);
 };

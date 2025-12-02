@@ -23,9 +23,20 @@ set(RENDERING_SOURCES
     src/rendering/Pipeline.cpp
     src/rendering/CommandBuffer.cpp
     src/rendering/Renderer.cpp
-    src/rendering/Buffer.cpp
-    src/rendering/VertexBuffer.cpp
-    src/rendering/IndexBuffer.cpp
+)
+
+# Liste des fichiers sources - Rendering/Buffer
+set(RENDERING_BUFFER_SOURCES
+    src/rendering/Buffer/Buffer.cpp
+    src/rendering/Buffer/VertexBuffer.cpp
+    src/rendering/Buffer/IndexBuffer.cpp
+    src/rendering/Buffer/UniformBuffer.cpp
+)
+
+# Liste des fichiers sources - Rendering/Descriptor
+set(RENDERING_DESCRIPTOR_SOURCES
+    src/rendering/Descriptor/DescriptorSetLayout.cpp
+    src/rendering/Descriptor/DescriptorPool.cpp
 )
 
 # Liste des fichiers sources - Utils
@@ -49,9 +60,19 @@ set(RENDERING_HEADERS
     src/rendering/CommandBuffer.hpp
     src/rendering/Renderer.hpp
     src/rendering/Vertex.hpp
-    src/rendering/Buffer.hpp
-    src/rendering/VertexBuffer.hpp
-    src/rendering/IndexBuffer.hpp
+)
+
+set(RENDERING_BUFFER_HEADERS
+    src/rendering/Buffer/Buffer.hpp
+    src/rendering/Buffer/VertexBuffer.hpp
+    src/rendering/Buffer/IndexBuffer.hpp
+    src/rendering/Buffer/UniformBuffer.hpp
+    src/rendering/Buffer/UniformBufferObject.hpp
+)
+
+set(RENDERING_DESCRIPTOR_HEADERS
+    src/rendering/Descriptor/DescriptorSetLayout.hpp
+    src/rendering/Descriptor/DescriptorPool.hpp
 )
 
 set(UTILS_HEADERS
@@ -65,12 +86,16 @@ set(SOURCES
     src/main.cpp
     ${CORE_SOURCES}
     ${RENDERING_SOURCES}
+    ${RENDERING_BUFFER_SOURCES}
+    ${RENDERING_DESCRIPTOR_SOURCES}
     ${UTILS_SOURCES}
 )
 
 set(HEADERS
     ${CORE_HEADERS}
     ${RENDERING_HEADERS}
+    ${RENDERING_BUFFER_HEADERS}
+    ${RENDERING_DESCRIPTOR_HEADERS}
     ${UTILS_HEADERS}
 )
 
