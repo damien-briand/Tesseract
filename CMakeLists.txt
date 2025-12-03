@@ -45,6 +45,7 @@ set(UTILS_SOURCES
     src/utils/FileUtils.cpp
     src/utils/ShaderLoader.cpp
     src/utils/VulkanUtils.cpp
+    src/utils/ModelLoader.cpp
 )
 
 # Liste des fichiers headers (optionnel, pour IDEs)
@@ -81,6 +82,7 @@ set(UTILS_HEADERS
     src/utils/FileUtils.hpp
     src/utils/ShaderLoader.hpp
     src/utils/VulkanUtils.hpp
+    src/utils/ModelLoader.hpp
 )
 
 set(RENDERING_TEXTURE_SOURCES

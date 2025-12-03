@@ -14,6 +14,7 @@
 #include "rendering/Descriptor/DescriptorPool.hpp"
 #include "rendering/Texture/Texture.hpp"
 #include "rendering/DepthBuffer.hpp"
+#include "utils/ModelLoader.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -23,7 +24,8 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const std::string SHADERS_PATH = "../src/shaders/spv/";
-const std::string TEXTURE_PATH = "../assets/textures/texture.jpg";
+const std::string TEXTURE_PATH = "../assets/models/viking_room.png";
+const std::string MODEL_PATH = "../assets/models/viking_room.obj";
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
@@ -31,33 +33,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
-
-// Carré 1 : ROUGE, plus proche (Z = -0.5)
-// Carré 2 : VERT, plus loin (Z = 0.5), décalé à droite
-const std::vector<Vertex> vertices = {
-    // ===== CARRÉ ROUGE (proche, Z = -0.5) =====
-    // Position (X, Y, Z)         Couleur (RGB)        TexCoord (UV)
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 0: Bas-gauche
-    {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 1: Bas-droit
-    {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // 2: Haut-droit
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 3: Haut-gauche
-
-    // ===== CARRÉ VERT (loin, Z = 0. 5, décalé à droite) =====
-    {{0.0f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 4: Bas-gauche
-    {{1.0f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 5: Bas-droit
-    {{1.0f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // 6: Haut-droit
-    {{0.0f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}} // 7: Haut-gauche
-};
-
-const std::vector<uint16_t> indices = {
-    // Carré ROUGE (indices 0-3)
-    0, 1, 2, // Triangle 1
-    2, 3, 0, // Triangle 2
-
-    // Carré VERT (indices 4-7)
-    4, 5, 6, // Triangle 1
-    6, 7, 4  // Triangle 2
-};
 
 class Application
 {
@@ -130,6 +105,15 @@ private:
 
         // 11. Créer les command buffers
         m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
+
+        // 11. Charger le modèle 3D
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
+
+        if (!ModelLoader::loadModel(MODEL_PATH, vertices, indices))
+        {
+            throw std::runtime_error("Failed to load model: " + MODEL_PATH);
+        }
 
         // 12.  Créer le vertex buffer
         m_vertexBuffer = new VertexBuffer(m_device, vertices);
