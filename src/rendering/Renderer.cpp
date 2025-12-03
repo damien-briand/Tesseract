@@ -154,6 +154,11 @@ void Renderer::createSyncObjects()
 void Renderer::recreateSwapChain()
 {
     m_device->waitIdle();
+
+    // Recréer le depth buffer avec les nouvelles dimensions
+    delete m_depthBuffer;
+    m_depthBuffer = new DepthBuffer(m_device, m_swapChain);
+
     m_swapChain->recreate(m_renderPass->getHandle(), m_depthBuffer->getImageView());
 }
 
@@ -171,7 +176,7 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 
     // Matrice View : caméra face au carré
     ubo.view = glm::lookAt(
-        glm::vec3(0.5f, -1.0f, 1.5f), // Position : devant le carré sur l'axe Z
+        glm::vec3(0.0f, 0.0f, 2.0f), // Position : devant le carré sur l'axe Z
         glm::vec3(0.0f, 0.0f, 0.0f),  // Regarder vers : l'origine (centre du carré)
         glm::vec3(0.0f, 1.0f, 0.0f)   // Axe "up" : Y positif vers le haut
     );

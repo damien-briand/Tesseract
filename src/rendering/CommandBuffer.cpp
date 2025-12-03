@@ -52,7 +52,8 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *rend
 
     std::array<VkClearValue, 2> clearValues{};
     clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}}; // Clear color : noir
-    clearValues[1].depthStencil = {1.0f, 0}; // Clear depth : maximum (1.0f)
+    constexpr float DEPTH_CLEAR_VALUE = 1.0f;          // Le plus loin
+    clearValues[1].depthStencil = {DEPTH_CLEAR_VALUE, 0};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();

@@ -32,18 +32,31 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-// Données de test : un carré avec coordonnées de texture
+// Carré 1 : ROUGE, plus proche (Z = -0.5)
+// Carré 2 : VERT, plus loin (Z = 0.5), décalé à droite
 const std::vector<Vertex> vertices = {
-    // Position          Couleur                  TexCoord (UV)
-    {{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}, // Bas-gauche → Bas de texture (V=1.0)
-    {{0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  // Bas-droit → Bas de texture (V=1.0)
-    {{0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},   // Haut-droit → Haut de texture (V=0.0)
-    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}}   // Haut-gauche → Haut de texture (V=0.0)
+    // ===== CARRÉ ROUGE (proche, Z = -0.5) =====
+    // Position (X, Y, Z)         Couleur (RGB)        TexCoord (UV)
+    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}}, // 0: Bas-gauche
+    {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}}, // 1: Bas-droit
+    {{0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // 2: Haut-droit
+    {{-0.5f, 0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}}, // 3: Haut-gauche
+
+    // ===== CARRÉ VERT (loin, Z = 0. 5, décalé à droite) =====
+    {{0.0f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // 4: Bas-gauche
+    {{1.0f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}}, // 5: Bas-droit
+    {{1.0f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // 6: Haut-droit
+    {{0.0f, 0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}} // 7: Haut-gauche
 };
 
 const std::vector<uint16_t> indices = {
-    0, 1, 2, // Premier triangle
-    2, 3, 0  // Deuxième triangle
+    // Carré ROUGE (indices 0-3)
+    0, 1, 2, // Triangle 1
+    2, 3, 0, // Triangle 2
+
+    // Carré VERT (indices 4-7)
+    4, 5, 6, // Triangle 1
+    6, 7, 4  // Triangle 2
 };
 
 class Application
@@ -113,7 +126,7 @@ private:
             m_descriptorSetLayout,
             m_swapChain->getExtent(),
             SHADERS_PATH + "vert.spv",
-            SHADERS_PATH + "frag. spv");
+            SHADERS_PATH + "frag.spv");
 
         // 11. Créer les command buffers
         m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
