@@ -31,13 +31,13 @@ const bool enableValidationLayers = false;
 const bool enableValidationLayers = true;
 #endif
 
-// 🆕 Données de test : un carré avec coordonnées de texture
+// Données de test : un carré avec coordonnées de texture
 const std::vector<Vertex> vertices = {
     // Position          Couleur                  TexCoord (UV)
-    {{-0.5f, -0.5f},    {1.0f, 0.0f, 0.0f},    {0.0f, 0.0f}},  // Coin haut-gauche
-    {{ 0.5f, -0.5f},    {0.0f, 1.0f, 0.0f},    {1.0f, 0.0f}},  // Coin haut-droit
-    {{ 0.5f,  0.5f},    {0.0f, 0.0f, 1.0f},    {1.0f, 1.0f}},  // Coin bas-droit
-    {{-0.5f,  0.5f},    {1.0f, 1.0f, 1.0f},    {0.0f, 1.0f}}   // Coin bas-gauche
+    {{-0.5f, -0.5f},    {1.0f, 1.0f, 1.0f},    {0.0f, 1.0f}},  // Bas-gauche → Bas de texture (V=1.0)
+    {{ 0.5f, -0.5f},    {1.0f, 1.0f, 1.0f},    {1.0f, 1.0f}},  // Bas-droit → Bas de texture (V=1.0)
+    {{ 0.5f,  0.5f},    {1.0f, 1.0f, 1.0f},    {1.0f, 0.0f}},  // Haut-droit → Haut de texture (V=0.0)
+    {{-0.5f,  0.5f},    {1.0f, 1.0f, 1.0f},    {0.0f, 0.0f}}   // Haut-gauche → Haut de texture (V=0.0)
 };
 
 const std::vector<uint16_t> indices = {
