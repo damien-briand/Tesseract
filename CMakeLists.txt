@@ -81,13 +81,22 @@ set(UTILS_HEADERS
     src/utils/VulkanUtils.hpp
 )
 
-# Combiner toutes les sources
+set(RENDERING_TEXTURE_SOURCES
+    src/rendering/Texture/Texture.cpp
+)
+
+set(RENDERING_TEXTURE_HEADERS
+    src/rendering/Texture/Texture.hpp
+)
+
+# Dans la section SOURCES
 set(SOURCES
     src/main.cpp
     ${CORE_SOURCES}
     ${RENDERING_SOURCES}
     ${RENDERING_BUFFER_SOURCES}
     ${RENDERING_DESCRIPTOR_SOURCES}
+    ${RENDERING_TEXTURE_SOURCES} 
     ${UTILS_SOURCES}
 )
 
@@ -96,9 +105,9 @@ set(HEADERS
     ${RENDERING_HEADERS}
     ${RENDERING_BUFFER_HEADERS}
     ${RENDERING_DESCRIPTOR_HEADERS}
+    ${RENDERING_TEXTURE_HEADERS}
     ${UTILS_HEADERS}
 )
-
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Ajout du répertoire src/ pour les includes
