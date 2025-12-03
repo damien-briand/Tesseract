@@ -13,6 +13,7 @@
 #include "rendering/Descriptor/DescriptorSetLayout.hpp"
 #include "rendering/Descriptor/DescriptorPool.hpp"
 #include "rendering/Texture/Texture.hpp"
+#include "rendering/DepthBuffer.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -34,20 +35,22 @@ const bool enableValidationLayers = true;
 // Données de test : un carré avec coordonnées de texture
 const std::vector<Vertex> vertices = {
     // Position          Couleur                  TexCoord (UV)
-    {{-0.5f, -0.5f},    {1.0f, 1.0f, 1.0f},    {0.0f, 1.0f}},  // Bas-gauche → Bas de texture (V=1.0)
-    {{ 0.5f, -0.5f},    {1.0f, 1.0f, 1.0f},    {1.0f, 1.0f}},  // Bas-droit → Bas de texture (V=1.0)
-    {{ 0.5f,  0.5f},    {1.0f, 1.0f, 1.0f},    {1.0f, 0.0f}},  // Haut-droit → Haut de texture (V=0.0)
-    {{-0.5f,  0.5f},    {1.0f, 1.0f, 1.0f},    {0.0f, 0.0f}}   // Haut-gauche → Haut de texture (V=0.0)
+    {{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}, // Bas-gauche → Bas de texture (V=1.0)
+    {{0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},  // Bas-droit → Bas de texture (V=1.0)
+    {{0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f}},   // Haut-droit → Haut de texture (V=0.0)
+    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f}}   // Haut-gauche → Haut de texture (V=0.0)
 };
 
 const std::vector<uint16_t> indices = {
-    0, 1, 2,  // Premier triangle
-    2, 3, 0   // Deuxième triangle
+    0, 1, 2, // Premier triangle
+    2, 3, 0  // Deuxième triangle
 };
 
-class Application {
+class Application
+{
 public:
-    void run() {
+    void run()
+    {
         initVulkan();
         mainLoop();
         cleanup();
@@ -55,29 +58,31 @@ public:
 
 private:
     // Core objects
-    Window* m_window = nullptr;
-    Instance* m_instance = nullptr;
+    Window *m_window = nullptr;
+    Instance *m_instance = nullptr;
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-    Device* m_device = nullptr;
-    SwapChain* m_swapChain = nullptr;
+    Device *m_device = nullptr;
+    SwapChain *m_swapChain = nullptr;
 
     // Rendering objects
-    RenderPass* m_renderPass = nullptr;
-    DescriptorSetLayout* m_descriptorSetLayout = nullptr;
-    Pipeline* m_pipeline = nullptr;
-    CommandBuffer* m_commandBuffer = nullptr;
-    VertexBuffer* m_vertexBuffer = nullptr;
-    IndexBuffer* m_indexBuffer = nullptr;
-    UniformBuffer* m_uniformBuffer = nullptr;
-    Texture* m_texture = nullptr;  // 🆕 Pointeur vers la texture
-    DescriptorPool* m_descriptorPool = nullptr;
-    Renderer* m_renderer = nullptr;
+    RenderPass *m_renderPass = nullptr;
+    DescriptorSetLayout *m_descriptorSetLayout = nullptr;
+    Pipeline *m_pipeline = nullptr;
+    CommandBuffer *m_commandBuffer = nullptr;
+    VertexBuffer *m_vertexBuffer = nullptr;
+    IndexBuffer *m_indexBuffer = nullptr;
+    UniformBuffer *m_uniformBuffer = nullptr;
+    Texture *m_texture = nullptr;
+    DepthBuffer *m_depthBuffer = nullptr;
+    DescriptorPool *m_descriptorPool = nullptr;
+    Renderer *m_renderer = nullptr;
 
-    void initVulkan() {
+    void initVulkan()
+    {
         // 1. Créer la fenêtre
-        m_window = new Window(WIDTH, HEIGHT, "Tesseract - Texture Mapping");
+        m_window = new Window(WIDTH, HEIGHT, "Tesseract - Depth Buffering");
 
-        // 2. Créer l'instance Vulkan
+        // 2.  Créer l'instance Vulkan
         m_instance = new Instance("Tesseract", enableValidationLayers);
 
         // 3. Créer la surface
@@ -89,50 +94,51 @@ private:
         // 5. Créer la swapchain
         m_swapChain = new SwapChain(m_device, m_surface, m_window);
 
-        // 6. Créer le render pass
-        m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat());
+        // 6. Créer le depth buffer
+        m_depthBuffer = new DepthBuffer(m_device, m_swapChain);
 
-        // 7.  Créer les framebuffers
-        m_swapChain->createFramebuffers(m_renderPass->getHandle());
+        // 7. Créer le render pass (MODIFIÉ : avec depth format)
+        m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(), m_depthBuffer->getFormat());
 
-        // 8.  Créer le descriptor set layout (UBO + Texture Sampler)
+        // 8. Créer les framebuffers (MODIFIÉ : avec depth buffer)
+        m_swapChain->createFramebuffers(m_renderPass->getHandle(), m_depthBuffer->getImageView());
+
+        // 9.  Créer le descriptor set layout (UBO + Texture Sampler)
         m_descriptorSetLayout = new DescriptorSetLayout(m_device);
 
-        // 9. Créer le pipeline graphique (avec descriptor set layout)
+        // 10. Créer le pipeline graphique (avec descriptor set layout)
         m_pipeline = new Pipeline(
             m_device,
             m_renderPass,
             m_descriptorSetLayout,
             m_swapChain->getExtent(),
             SHADERS_PATH + "vert.spv",
-            SHADERS_PATH + "frag.spv"
-        );
+            SHADERS_PATH + "frag. spv");
 
-        // 10. Créer les command buffers
+        // 11. Créer les command buffers
         m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
-        // 11.  Créer le vertex buffer
+        // 12.  Créer le vertex buffer
         m_vertexBuffer = new VertexBuffer(m_device, vertices);
 
-        // 12. Créer l'index buffer
+        // 13. Créer l'index buffer
         m_indexBuffer = new IndexBuffer(m_device, indices);
 
-        // 13. Créer les uniform buffers
+        // 14. Créer les uniform buffers
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
-        // 🆕 14. Charger la texture
+        // 15. Charger la texture
         m_texture = new Texture(m_device, TEXTURE_PATH);
 
-        // 🆕 15. Créer le descriptor pool avec texture (MODIFIÉ)
+        // 16. Créer le descriptor pool avec texture
         m_descriptorPool = new DescriptorPool(
-            m_device, 
-            m_descriptorSetLayout, 
+            m_device,
+            m_descriptorSetLayout,
             m_uniformBuffer,
-            m_texture,  // 🆕 Passer la texture
-            MAX_FRAMES_IN_FLIGHT
-        );
+            m_texture,
+            MAX_FRAMES_IN_FLIGHT);
 
-        // 16.  Créer le renderer (gère la synchronisation et le rendu)
+        // 17. Créer le renderer (gère la synchronisation et le rendu)
         m_renderer = new Renderer(
             m_device,
             m_swapChain,
@@ -144,14 +150,16 @@ private:
             m_indexBuffer,
             m_uniformBuffer,
             m_descriptorPool,
-            MAX_FRAMES_IN_FLIGHT
-        );
+            m_depthBuffer,
+            MAX_FRAMES_IN_FLIGHT);
 
-        std::cout << "✓ Vulkan initialized successfully with texture support!" << std::endl;
+        std::cout << "✓ Vulkan initialized successfully with depth buffering!" << std::endl;
     }
 
-    void mainLoop() {
-        while (!m_window->shouldClose()) {
+    void mainLoop()
+    {
+        while (!m_window->shouldClose())
+        {
             m_window->pollEvents();
             m_renderer->drawFrame();
         }
@@ -159,40 +167,46 @@ private:
         m_renderer->waitIdle();
     }
 
-    void cleanup() {
-        // L'ordre de destruction est important ! 
+    void cleanup()
+    {
+        // L'ordre de destruction est important !
         // On détruit dans l'ordre inverse de la création
 
-        delete m_renderer;           // 16. Renderer (sync objects)
-        delete m_descriptorPool;     // 15.  Descriptor pool
-        delete m_texture;            // 🆕 14. Texture
-        delete m_uniformBuffer;      // 13. Uniform buffers
-        delete m_indexBuffer;        // 12. Index buffer
-        delete m_vertexBuffer;       // 11.  Vertex buffer
-        delete m_commandBuffer;      // 10. Command buffers
-        delete m_pipeline;           // 9.   Pipeline
-        delete m_descriptorSetLayout;// 8.   Descriptor set layout
-        delete m_renderPass;         // 7.  Render pass
-        delete m_swapChain;          // 6.  SwapChain
-        
+        delete m_renderer;            // 17. Renderer (sync objects)
+        delete m_descriptorPool;      // 16.  Descriptor pool
+        delete m_texture;             // 15. Texture
+        delete m_uniformBuffer;       // 14.  Uniform buffers
+        delete m_indexBuffer;         // 13. Index buffer
+        delete m_vertexBuffer;        // 12.  Vertex buffer
+        delete m_commandBuffer;       // 11. Command buffers
+        delete m_pipeline;            // 10. Pipeline
+        delete m_descriptorSetLayout; // 9.   Descriptor set layout
+        delete m_renderPass;          // 8.   Render pass
+        delete m_swapChain;           // 7.  SwapChain
+        delete m_depthBuffer;         // 6. Depth buffer
+
         // Surface (avant device car device l'utilise)
         vkDestroySurfaceKHR(m_instance->getHandle(), m_surface, nullptr);
-        
-        delete m_device;             // 5.  Device
-        delete m_instance;           // 4.  Instance
-        delete m_window;             // 3.  Window
+
+        delete m_device;   // 5.   Device
+        delete m_instance; // 4.  Instance
+        delete m_window;   // 3.  Window
 
         std::cout << "✓ Cleanup completed!" << std::endl;
     }
 };
 
-int main() {
+int main()
+{
     Application app;
 
-    try {
+    try
+    {
         app.run();
-    } catch (const std::exception& e) {
-        std::cerr << "✗ Error: " << e. what() << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "✗ Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 

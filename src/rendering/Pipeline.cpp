@@ -6,27 +6,28 @@
 #include "Vertex.hpp"
 #include <stdexcept>
 
-Pipeline::Pipeline(Device* device, RenderPass* renderPass, DescriptorSetLayout* descriptorSetLayout,
-                   VkExtent2D swapChainExtent, const std::string& vertShaderPath, const std::string& fragShaderPath)
-    : m_device(device)
-    , m_pipelineLayout(VK_NULL_HANDLE)
-    , m_graphicsPipeline(VK_NULL_HANDLE)
+Pipeline::Pipeline(Device *device, RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
+                   VkExtent2D swapChainExtent, const std::string &vertShaderPath, const std::string &fragShaderPath)
+    : m_device(device), m_pipelineLayout(VK_NULL_HANDLE), m_graphicsPipeline(VK_NULL_HANDLE)
 {
     createGraphicsPipeline(renderPass, descriptorSetLayout, swapChainExtent, vertShaderPath, fragShaderPath);
 }
 
-Pipeline::~Pipeline() {
-    if (m_graphicsPipeline != VK_NULL_HANDLE) {
+Pipeline::~Pipeline()
+{
+    if (m_graphicsPipeline != VK_NULL_HANDLE)
+    {
         vkDestroyPipeline(m_device->getLogicalDevice(), m_graphicsPipeline, nullptr);
     }
-    if (m_pipelineLayout != VK_NULL_HANDLE) {
+    if (m_pipelineLayout != VK_NULL_HANDLE)
+    {
         vkDestroyPipelineLayout(m_device->getLogicalDevice(), m_pipelineLayout, nullptr);
     }
 }
 
-void Pipeline::createGraphicsPipeline(RenderPass* renderPass, DescriptorSetLayout* descriptorSetLayout,
-                                      VkExtent2D swapChainExtent, const std::string& vertShaderPath, 
-                                      const std::string& fragShaderPath)
+void Pipeline::createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
+                                      VkExtent2D swapChainExtent, const std::string &vertShaderPath,
+                                      const std::string &fragShaderPath)
 {
     VkShaderModule vertShaderModule = ShaderLoader::loadShader(m_device->getLogicalDevice(), vertShaderPath);
     VkShaderModule fragShaderModule = ShaderLoader::loadShader(m_device->getLogicalDevice(), fragShaderPath);
@@ -85,6 +86,19 @@ void Pipeline::createGraphicsPipeline(RenderPass* renderPass, DescriptorSetLayou
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    // 🆕 Depth Stencil State
+    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.minDepthBounds = 0.0f;
+    depthStencil.maxDepthBounds = 1.0f;
+    depthStencil.stencilTestEnable = VK_FALSE;
+    depthStencil.front = {};
+    depthStencil.back = {};
+
     // Color Blending
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
@@ -101,14 +115,13 @@ void Pipeline::createGraphicsPipeline(RenderPass* renderPass, DescriptorSetLayou
     // Dynamic State
     std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR
-    };
+        VK_DYNAMIC_STATE_SCISSOR};
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
 
-    // Pipeline Layout - MODIFIÉ pour inclure le descriptor set layout
+    // Pipeline Layout
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
@@ -116,11 +129,12 @@ void Pipeline::createGraphicsPipeline(RenderPass* renderPass, DescriptorSetLayou
     pipelineLayoutInfo.pSetLayouts = &setLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
 
-    if (vkCreatePipelineLayout(m_device->getLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(m_device->getLogicalDevice(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to create pipeline layout!");
     }
 
-    // Graphics Pipeline
+    // Graphics Pipeline avec depth stencil
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
@@ -130,6 +144,7 @@ void Pipeline::createGraphicsPipeline(RenderPass* renderPass, DescriptorSetLayou
     pipelineInfo.pViewportState = &viewportState;
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.pDynamicState = &dynamicState;
     pipelineInfo.layout = m_pipelineLayout;
@@ -137,7 +152,8 @@ void Pipeline::createGraphicsPipeline(RenderPass* renderPass, DescriptorSetLayou
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(m_device->getLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(m_device->getLogicalDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to create graphics pipeline!");
     }
 

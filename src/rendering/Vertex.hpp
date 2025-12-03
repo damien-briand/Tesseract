@@ -35,7 +35,7 @@ struct Vertex {
         // Attribut 0 : Position
         attributeDescriptions[0].binding = 0;                    // Binding index
         attributeDescriptions[0].location = 0;                   // Location dans le shader
-        attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; // vec2 (2 floats)
+        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3 (3 floats)
         attributeDescriptions[0].offset = offsetof(Vertex, position);
 
         // Attribut 1 : Couleur

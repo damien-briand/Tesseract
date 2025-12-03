@@ -21,8 +21,9 @@ set(CORE_SOURCES
 set(RENDERING_SOURCES
     src/rendering/RenderPass.cpp
     src/rendering/Pipeline.cpp
-    src/rendering/CommandBuffer.cpp
     src/rendering/Renderer.cpp
+    src/rendering/CommandBuffer.cpp
+    src/rendering/DepthBuffer.cpp
 )
 
 # Liste des fichiers sources - Rendering/Buffer
@@ -57,9 +58,10 @@ set(CORE_HEADERS
 set(RENDERING_HEADERS
     src/rendering/RenderPass.hpp
     src/rendering/Pipeline.hpp
-    src/rendering/CommandBuffer.hpp
     src/rendering/Renderer.hpp
     src/rendering/Vertex.hpp
+    src/rendering/CommandBuffer.hpp
+    src/rendering/DepthBuffer.hpp
 )
 
 set(RENDERING_BUFFER_HEADERS

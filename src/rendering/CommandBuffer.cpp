@@ -7,6 +7,7 @@
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include <stdexcept>
+#include <array>
 
 CommandBuffer::CommandBuffer(Device *device, uint32_t maxFramesInFlight)
     : m_device(device), m_commandPool(VK_NULL_HANDLE)
@@ -49,9 +50,12 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *rend
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = swapChain->getExtent();
 
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}}; // Clear color : noir
+    clearValues[1].depthStencil = {1.0f, 0}; // Clear depth : maximum (1.0f)
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 

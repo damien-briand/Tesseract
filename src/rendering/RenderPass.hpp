@@ -6,7 +6,8 @@ class Device;
 
 class RenderPass {
 public:
-    RenderPass(Device* device, VkFormat swapChainImageFormat);
+    // Ajout du paramètre depthFormat
+    RenderPass(Device* device, VkFormat swapChainImageFormat, VkFormat depthFormat);
     ~RenderPass();
 
     // Suppression de la copie
@@ -20,5 +21,6 @@ private:
     Device* m_device;
     VkRenderPass m_renderPass;
 
-    void createRenderPass(VkFormat swapChainImageFormat);
+    // Ajout du paramètre depthFormat
+    void createRenderPass(VkFormat swapChainImageFormat, VkFormat depthFormat);
 };

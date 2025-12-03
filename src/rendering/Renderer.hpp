@@ -15,6 +15,7 @@ class VertexBuffer;
 class IndexBuffer;
 class UniformBuffer;
 class DescriptorPool;
+class DepthBuffer;  // 🆕 Forward declaration
 
 class Renderer {
 public:
@@ -22,7 +23,8 @@ public:
              RenderPass* renderPass, Pipeline* pipeline, 
              CommandBuffer* commandBuffer, VertexBuffer* vertexBuffer,
              IndexBuffer* indexBuffer, UniformBuffer* uniformBuffer,
-             DescriptorPool* descriptorPool, uint32_t maxFramesInFlight);
+             DescriptorPool* descriptorPool, DepthBuffer* depthBuffer,
+             uint32_t maxFramesInFlight);
     ~Renderer();
 
     // Suppression de la copie
@@ -44,6 +46,7 @@ private:
     IndexBuffer* m_indexBuffer;
     UniformBuffer* m_uniformBuffer;
     DescriptorPool* m_descriptorPool;
+    DepthBuffer* m_depthBuffer;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;

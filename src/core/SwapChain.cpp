@@ -36,7 +36,7 @@ void SwapChain::cleanup() {
     }
 }
 
-void SwapChain::recreate(VkRenderPass renderPass) {
+void SwapChain::recreate(VkRenderPass renderPass, VkImageView depthImageView) {
     int width = 0, height = 0;
     m_window->getFramebufferSize(&width, &height);
     while (width == 0 || height == 0) {
@@ -50,7 +50,7 @@ void SwapChain::recreate(VkRenderPass renderPass) {
 
     createSwapChain();
     createImageViews();
-    createFramebuffers(renderPass);
+    createFramebuffers(renderPass, depthImageView);
 }
 
 void SwapChain::createSwapChain() {
@@ -133,17 +133,21 @@ void SwapChain::createImageViews() {
     }
 }
 
-void SwapChain::createFramebuffers(VkRenderPass renderPass) {
+void SwapChain::createFramebuffers(VkRenderPass renderPass, VkImageView depthImageView) {
     m_framebuffers.resize(m_imageViews.size());
 
     for (size_t i = 0; i < m_imageViews.size(); i++) {
-        VkImageView attachments[] = {m_imageViews[i]};
+        // 🆕 Maintenant on a 2 attachments : color + depth
+        std::array<VkImageView, 2> attachments = {
+            m_imageViews[i],      // Attachment 0 : Color
+            depthImageView        // Attachment 1 : Depth (partagé entre tous les framebuffers)
+        };
 
         VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo. sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());  // 🆕 2 au lieu de 1
+        framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = m_extent.width;
         framebufferInfo.height = m_extent.height;
         framebufferInfo.layers = 1;

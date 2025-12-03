@@ -7,6 +7,7 @@
 #include "Buffer/UniformBuffer.hpp"
 #include "Buffer/UniformBufferObject.hpp"
 #include "Descriptor/DescriptorPool.hpp"
+#include "DepthBuffer.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include "../core/Window.hpp"
@@ -19,8 +20,15 @@ Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
                    CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
                    IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
-                   DescriptorPool *descriptorPool, uint32_t maxFramesInFlight)
-    : m_device(device), m_swapChain(swapChain), m_window(window), m_renderPass(renderPass), m_pipeline(pipeline), m_commandBuffer(commandBuffer), m_vertexBuffer(vertexBuffer), m_indexBuffer(indexBuffer), m_uniformBuffer(uniformBuffer), m_descriptorPool(descriptorPool), m_maxFramesInFlight(maxFramesInFlight), m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now())
+                   DescriptorPool *descriptorPool, DepthBuffer *depthBuffer,
+                   uint32_t maxFramesInFlight)
+    : m_device(device), m_swapChain(swapChain), m_window(window),
+      m_renderPass(renderPass), m_pipeline(pipeline),
+      m_commandBuffer(commandBuffer), m_vertexBuffer(vertexBuffer),
+      m_indexBuffer(indexBuffer), m_uniformBuffer(uniformBuffer),
+      m_descriptorPool(descriptorPool), m_depthBuffer(depthBuffer),
+      m_maxFramesInFlight(maxFramesInFlight), m_currentFrame(0),
+      m_startTime(std::chrono::high_resolution_clock::now())
 {
     createSyncObjects();
 }
@@ -146,7 +154,7 @@ void Renderer::createSyncObjects()
 void Renderer::recreateSwapChain()
 {
     m_device->waitIdle();
-    m_swapChain->recreate(m_renderPass->getHandle());
+    m_swapChain->recreate(m_renderPass->getHandle(), m_depthBuffer->getImageView());
 }
 
 void Renderer::updateUniformBuffer(uint32_t currentFrame)
@@ -163,9 +171,9 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 
     // Matrice View : caméra face au carré
     ubo.view = glm::lookAt(
-        glm::vec3(0.0f, 0.0f, 2.8f), // Position : devant le carré sur l'axe Z
-        glm::vec3(0.0f, 0.0f, 0.0f),     // Regarder vers : l'origine (centre du carré)
-        glm::vec3(0.0f, 1.0f, 0.0f)      // Axe "up" : Y positif vers le haut
+        glm::vec3(0.5f, -1.0f, 1.5f), // Position : devant le carré sur l'axe Z
+        glm::vec3(0.0f, 0.0f, 0.0f),  // Regarder vers : l'origine (centre du carré)
+        glm::vec3(0.0f, 1.0f, 0.0f)   // Axe "up" : Y positif vers le haut
     );
 
     // Matrice Projection : perspective avec FOV de 45°
