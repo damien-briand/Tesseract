@@ -6,6 +6,7 @@
 class Device;
 class DescriptorSetLayout;
 class UniformBuffer;
+class Texture;
 
 /**
  * @brief Gère le pool de descriptors et les descriptor sets
@@ -13,7 +14,8 @@ class UniformBuffer;
 class DescriptorPool {
 public:
     DescriptorPool(Device* device, DescriptorSetLayout* layout, 
-                   UniformBuffer* uniformBuffer, uint32_t framesInFlight);
+                   UniformBuffer* uniformBuffer, Texture* texture,
+                   uint32_t framesInFlight);
     ~DescriptorPool();
 
     // Suppression de la copie
@@ -25,10 +27,12 @@ public:
 
 private:
     Device* m_device;
+    Texture* m_texture;
     VkDescriptorPool m_descriptorPool;
     std::vector<VkDescriptorSet> m_descriptorSets;
 
     void createDescriptorPool(uint32_t framesInFlight);
-    void createDescriptorSets(DescriptorSetLayout* layout, UniformBuffer* uniformBuffer, 
-                              uint32_t framesInFlight);
+    
+    void createDescriptorSets(DescriptorSetLayout* layout, UniformBuffer* uniformBuffer,
+                              Texture* texture, uint32_t framesInFlight);
 };
