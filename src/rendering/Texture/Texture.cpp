@@ -57,7 +57,7 @@ void Texture::createTextureImage(const std::string &texturePath)
     m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(m_width, m_height)))) + 1;
 
     // Vérifier le support du format
-    VkFormat imageFormat = VK_FORMAT_R8G8B8A8_UNORM; // Ou SRGB selon votre préférence
+    VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB; // Ou SRGB selon votre préférence
     if (!checkFormatSupport(imageFormat))
     {
         std::cerr << "⚠ Mipmap generation not supported, using single level" << std::endl;
