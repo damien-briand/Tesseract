@@ -113,9 +113,9 @@ void Texture::createTextureImage(const std::string &texturePath)
 
     vkBindImageMemory(m_device->getLogicalDevice(), m_textureImage, m_textureImageMemory, 0);
 
-    // 5. Transitionner uniquement vers TRANSFER_DST pour copier le niveau 0
+    // 5. Transitionner TOUS les mip levels vers TRANSFER_DST
     transitionImageLayout(m_textureImage, imageFormat,
-                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+                          VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_mipLevels);
 
     copyBufferToImage(stagingBuffer.getHandle(), m_textureImage, m_width, m_height);
 
