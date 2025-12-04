@@ -1,4 +1,15 @@
 # Tesseract
 
-05 - Uniform Buffers
-PS : CA MARCHE PAS ENVIE DE ME FOUTRE EN L'AIR
+## Compilation Instructions
+
+To compile the Tesseract project, use the following commands for a release build:
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build/
+```
+
+For debugging builds, use the following commands:
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/
+```
