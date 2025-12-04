@@ -2,6 +2,7 @@
 #include "core/Instance.hpp"
 #include "core/Device.hpp"
 #include "core/SwapChain.hpp"
+
 #include "rendering/RenderPass.hpp"
 #include "rendering/Pipeline.hpp"
 #include "rendering/Renderer.hpp"
@@ -14,6 +15,8 @@
 #include "rendering/Descriptor/DescriptorPool.hpp"
 #include "rendering/Texture/Texture.hpp"
 #include "rendering/DepthBuffer.hpp"
+#include "rendering/MSAABuffer.hpp"
+
 #include "utils/ModelLoader.hpp"
 
 #include <iostream>
@@ -65,10 +68,13 @@ private:
     DescriptorPool *m_descriptorPool = nullptr;
     Renderer *m_renderer = nullptr;
 
+    MSAABuffer *m_msaaBuffer = nullptr;
+    VkSampleCountFlagBits m_msaaSamples;
+
     void initVulkan()
     {
         // 1. Créer la fenêtre
-        m_window = new Window(WIDTH, HEIGHT, "Tesseract - Depth Buffering");
+        m_window = new Window(WIDTH, HEIGHT, "Tesseract");
 
         // 2.  Créer l'instance Vulkan
         m_instance = new Instance("Tesseract", enableValidationLayers);
@@ -79,17 +85,25 @@ private:
         // 4.  Créer le device (physical + logical)
         m_device = new Device(m_instance->getHandle(), m_surface);
 
+        // Déterminer le nombre de samples MSAA supportés
+        m_msaaSamples = m_device->getMaxUsableSampleCount();
+
         // 5. Créer la swapchain
         m_swapChain = new SwapChain(m_device, m_surface, m_window);
 
+        // Créer le buffer MSAA
+        m_msaaBuffer = new MSAABuffer(m_device, m_swapChain, m_msaaSamples);
+
         // 6. Créer le depth buffer
-        m_depthBuffer = new DepthBuffer(m_device, m_swapChain);
+        m_depthBuffer = new DepthBuffer(m_device, m_swapChain, m_msaaSamples);
 
         // 7. Créer le render pass
-        m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(), m_depthBuffer->getFormat());
+        m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(), m_depthBuffer->getFormat(), m_msaaSamples);
 
         // 8. Créer les framebuffers (MODIFIÉ : avec depth buffer)
-        m_swapChain->createFramebuffers(m_renderPass->getHandle(), m_depthBuffer->getImageView());
+        m_swapChain->createFramebuffers(m_renderPass->getHandle(),
+                                        m_msaaBuffer->getImageView(),
+                                        m_depthBuffer->getImageView());
 
         // 9.  Créer le descriptor set layout (UBO + Texture Sampler)
         m_descriptorSetLayout = new DescriptorSetLayout(m_device);
@@ -101,7 +115,7 @@ private:
             m_descriptorSetLayout,
             m_swapChain->getExtent(),
             SHADERS_PATH + "vert.spv",
-            SHADERS_PATH + "frag.spv");
+            SHADERS_PATH + "frag.spv", m_msaaSamples);
 
         // 11. Créer les command buffers
         m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
@@ -147,6 +161,7 @@ private:
             m_indexBuffer,
             m_uniformBuffer,
             m_descriptorPool,
+            m_msaaBuffer,
             m_depthBuffer,
             MAX_FRAMES_IN_FLIGHT);
 
@@ -180,6 +195,7 @@ private:
         delete m_descriptorSetLayout; // 9.   Descriptor set layout
         delete m_renderPass;          // 8.   Render pass
         delete m_swapChain;           // 7.  SwapChain
+        delete m_msaaBuffer;          // MSAA buffer
         delete m_depthBuffer;         // 6. Depth buffer
 
         // Surface (avant device car device l'utilise)

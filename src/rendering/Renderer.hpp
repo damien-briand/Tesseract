@@ -15,38 +15,41 @@ class VertexBuffer;
 class IndexBuffer;
 class UniformBuffer;
 class DescriptorPool;
-class DepthBuffer;  // Forward declaration
+class DepthBuffer;
+class MSAABuffer;
 
-class Renderer {
+class Renderer
+{
 public:
-    Renderer(Device* device, SwapChain* swapChain, Window* window, 
-             RenderPass* renderPass, Pipeline* pipeline, 
-             CommandBuffer* commandBuffer, VertexBuffer* vertexBuffer,
-             IndexBuffer* indexBuffer, UniformBuffer* uniformBuffer,
-             DescriptorPool* descriptorPool, DepthBuffer* depthBuffer,
+    Renderer(Device *device, SwapChain *swapChain, Window *window,
+             RenderPass *renderPass, Pipeline *pipeline,
+             CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
+             IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
+             DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
              uint32_t maxFramesInFlight);
     ~Renderer();
 
     // Suppression de la copie
-    Renderer(const Renderer&) = delete;
-    Renderer& operator=(const Renderer&) = delete;
+    Renderer(const Renderer &) = delete;
+    Renderer &operator=(const Renderer &) = delete;
 
     // Méthodes
     void drawFrame();
     void waitIdle();
 
 private:
-    Device* m_device;
-    SwapChain* m_swapChain;
-    Window* m_window;
-    RenderPass* m_renderPass;
-    Pipeline* m_pipeline;
-    CommandBuffer* m_commandBuffer;
-    VertexBuffer* m_vertexBuffer;
-    IndexBuffer* m_indexBuffer;
-    UniformBuffer* m_uniformBuffer;
-    DescriptorPool* m_descriptorPool;
-    DepthBuffer* m_depthBuffer;
+    Device *m_device;
+    SwapChain *m_swapChain;
+    Window *m_window;
+    RenderPass *m_renderPass;
+    Pipeline *m_pipeline;
+    CommandBuffer *m_commandBuffer;
+    VertexBuffer *m_vertexBuffer;
+    IndexBuffer *m_indexBuffer;
+    UniformBuffer *m_uniformBuffer;
+    DescriptorPool *m_descriptorPool;
+    DepthBuffer *m_depthBuffer;
+    MSAABuffer *m_msaaBuffer;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;

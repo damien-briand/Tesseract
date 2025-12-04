@@ -4,23 +4,24 @@
 
 class Device;
 
-class RenderPass {
+class RenderPass
+{
 public:
-    // Ajout du paramètre depthFormat
-    RenderPass(Device* device, VkFormat swapChainImageFormat, VkFormat depthFormat);
+    RenderPass(Device *device, VkFormat swapChainImageFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
+
     ~RenderPass();
 
     // Suppression de la copie
-    RenderPass(const RenderPass&) = delete;
-    RenderPass& operator=(const RenderPass&) = delete;
+    RenderPass(const RenderPass &) = delete;
+    RenderPass &operator=(const RenderPass &) = delete;
 
     // Getters
     VkRenderPass getHandle() const { return m_renderPass; }
 
 private:
-    Device* m_device;
+    Device *m_device;
     VkRenderPass m_renderPass;
+    VkSampleCountFlagBits m_msaaSamples;
 
-    // Ajout du paramètre depthFormat
-    void createRenderPass(VkFormat swapChainImageFormat, VkFormat depthFormat);
+    void createRenderPass(VkFormat swapChainImageFormat, VkFormat depthFormat, VkSampleCountFlagBits msaaSamples);
 };

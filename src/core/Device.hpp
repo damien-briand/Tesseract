@@ -4,23 +4,26 @@
 #include <vector>
 #include <optional>
 
-struct QueueFamilyIndices {
+struct QueueFamilyIndices
+{
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
 
-    bool isComplete() const {
+    bool isComplete() const
+    {
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
 
-class Device {
+class Device
+{
 public:
     Device(VkInstance instance, VkSurfaceKHR surface);
     ~Device();
 
     // Suppression de la copie
-    Device(const Device&) = delete;
-    Device& operator=(const Device&) = delete;
+    Device(const Device &) = delete;
+    Device &operator=(const Device &) = delete;
 
     // Getters
     VkPhysicalDevice getPhysicalDevice() const { return m_physicalDevice; }
@@ -28,6 +31,12 @@ public:
     VkQueue getGraphicsQueue() const { return m_graphicsQueue; }
     VkQueue getPresentQueue() const { return m_presentQueue; }
     QueueFamilyIndices getQueueFamilies() const { return m_queueFamilyIndices; }
+
+    /**
+     * @brief Obtient le nombre maximum de samples MSAA supportés
+     * @return VkSampleCountFlagBits (VK_SAMPLE_COUNT_1_BIT à VK_SAMPLE_COUNT_64_BIT)
+     */
+    VkSampleCountFlagBits getMaxUsableSampleCount() const;
 
     // Méthodes utilitaires
     void waitIdle() const;
@@ -42,7 +51,7 @@ private:
     VkInstance m_instance;
     VkSurfaceKHR m_surface;
 
-    std::vector<const char*> m_deviceExtensions;
+    std::vector<const char *> m_deviceExtensions;
 
     // Méthodes privées
     void pickPhysicalDevice();

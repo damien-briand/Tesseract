@@ -9,14 +9,15 @@ class SwapChain;
 /**
  * @brief Gère le depth buffer (Z-buffer) pour le depth testing
  */
-class DepthBuffer {
+class DepthBuffer
+{
 public:
-    DepthBuffer(Device* device, SwapChain* swapChain);
+    DepthBuffer(Device *device, SwapChain *swapChain, VkSampleCountFlagBits msaaSamples);
     ~DepthBuffer();
 
     // Suppression de la copie
-    DepthBuffer(const DepthBuffer&) = delete;
-    DepthBuffer& operator=(const DepthBuffer&) = delete;
+    DepthBuffer(const DepthBuffer &) = delete;
+    DepthBuffer &operator=(const DepthBuffer &) = delete;
 
     // Getters
     VkImage getImage() const { return m_depthImage; }
@@ -24,19 +25,20 @@ public:
     VkFormat getFormat() const { return m_depthFormat; }
 
 private:
-    Device* m_device;
-    
+    Device *m_device;
+
     VkImage m_depthImage;
     VkDeviceMemory m_depthImageMemory;
     VkImageView m_depthImageView;
     VkFormat m_depthFormat;
+    VkSampleCountFlagBits m_msaaSamples;
 
     // Méthodes de création
-    void createDepthResources(VkExtent2D swapChainExtent);
-    
+    void createDepthResources(VkExtent2D swapChainExtent, VkSampleCountFlagBits msaaSamples);
+
     // Helpers
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, 
-                                 VkImageTiling tiling, 
+    VkFormat findSupportedFormat(const std::vector<VkFormat> &candidates,
+                                 VkImageTiling tiling,
                                  VkFormatFeatureFlags features);
     VkFormat findDepthFormat();
     bool hasStencilComponent(VkFormat format);

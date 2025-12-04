@@ -33,9 +33,9 @@ public:
     size_t getImageCount() const { return m_images.size(); }
 
     // Méthodes
-    void createFramebuffers(VkRenderPass renderPass, VkImageView depthImageView);
+    void createFramebuffers(VkRenderPass renderPass, VkImageView msaaImageView, VkImageView depthImageView);
     void cleanup();
-    void recreate(VkRenderPass renderPass, VkImageView depthImageView);
+    void recreate(VkRenderPass renderPass, VkImageView msaaImageView, VkImageView depthImageView);
 
 private:
     Device *m_device;

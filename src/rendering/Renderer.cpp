@@ -2,6 +2,7 @@
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
 #include "CommandBuffer.hpp"
+#include "MSAABuffer.hpp"
 #include "Buffer/VertexBuffer.hpp"
 #include "Buffer/IndexBuffer.hpp"
 #include "Buffer/UniformBuffer.hpp"
@@ -20,13 +21,13 @@ Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
                    CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
                    IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
-                   DescriptorPool *descriptorPool, DepthBuffer *depthBuffer,
+                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
                    uint32_t maxFramesInFlight)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
       m_commandBuffer(commandBuffer), m_vertexBuffer(vertexBuffer),
       m_indexBuffer(indexBuffer), m_uniformBuffer(uniformBuffer),
-      m_descriptorPool(descriptorPool), m_depthBuffer(depthBuffer),
+      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer), m_depthBuffer(depthBuffer),
       m_maxFramesInFlight(maxFramesInFlight), m_currentFrame(0),
       m_startTime(std::chrono::high_resolution_clock::now())
 {
@@ -154,12 +155,9 @@ void Renderer::createSyncObjects()
 void Renderer::recreateSwapChain()
 {
     m_device->waitIdle();
-
-    // Recréer le depth buffer avec les nouvelles dimensions
-    delete m_depthBuffer;
-    m_depthBuffer = new DepthBuffer(m_device, m_swapChain);
-
-    m_swapChain->recreate(m_renderPass->getHandle(), m_depthBuffer->getImageView());
+    m_swapChain->recreate(m_renderPass->getHandle(),
+                          m_msaaBuffer->getImageView(),
+                          m_depthBuffer->getImageView());
 }
 
 void Renderer::updateUniformBuffer(uint32_t currentFrame)

@@ -40,6 +40,7 @@ set(RENDERING_SOURCES
     src/rendering/Renderer.cpp
     src/rendering/CommandBuffer.cpp
     src/rendering/DepthBuffer.cpp
+    src/rendering/MSAABuffer.cpp
 )
 
 # Liste des fichiers sources - Rendering/Buffer
@@ -79,6 +80,7 @@ set(RENDERING_HEADERS
     src/rendering/Vertex.hpp
     src/rendering/CommandBuffer.hpp
     src/rendering/DepthBuffer.hpp
+    src/rendering/MSAABuffer.hpp
 )
 
 set(RENDERING_BUFFER_HEADERS

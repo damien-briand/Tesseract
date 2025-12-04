@@ -7,10 +7,11 @@
 #include <stdexcept>
 
 Pipeline::Pipeline(Device *device, RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
-                   VkExtent2D swapChainExtent, const std::string &vertShaderPath, const std::string &fragShaderPath)
+                   VkExtent2D swapChainExtent, const std::string &vertShaderPath, const std::string &fragShaderPath,
+                   VkSampleCountFlagBits msaaSamples)
     : m_device(device), m_pipelineLayout(VK_NULL_HANDLE), m_graphicsPipeline(VK_NULL_HANDLE)
 {
-    createGraphicsPipeline(renderPass, descriptorSetLayout, swapChainExtent, vertShaderPath, fragShaderPath);
+    createGraphicsPipeline(renderPass, descriptorSetLayout, swapChainExtent, vertShaderPath, fragShaderPath, msaaSamples);
 }
 
 Pipeline::~Pipeline()
@@ -27,7 +28,7 @@ Pipeline::~Pipeline()
 
 void Pipeline::createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
                                       VkExtent2D swapChainExtent, const std::string &vertShaderPath,
-                                      const std::string &fragShaderPath)
+                                      const std::string &fragShaderPath, VkSampleCountFlagBits msaaSamples)
 {
     VkShaderModule vertShaderModule = ShaderLoader::loadShader(m_device->getLogicalDevice(), vertShaderPath);
     VkShaderModule fragShaderModule = ShaderLoader::loadShader(m_device->getLogicalDevice(), fragShaderPath);
@@ -84,7 +85,11 @@ void Pipeline::createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayou
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
-    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampling.rasterizationSamples = msaaSamples;
+    multisampling.minSampleShading = 1.0f;
+    multisampling.pSampleMask = nullptr;
+    multisampling.alphaToCoverageEnable = VK_FALSE;
+    multisampling.alphaToOneEnable = VK_FALSE;
 
     // Depth Stencil State
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
