@@ -5,6 +5,22 @@ project(vulkan CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Flags d'optimisation
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    # Mode Release : optimisations maximales
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
+    message(STATUS "Build type: Release (optimisations -O3 activées)")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Mode Debug : pas d'optimisation, symboles de debug
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra")
+    message(STATUS "Build type: Debug (pas d'optimisation)")
+else()
+    # Par défaut : Release
+    set(CMAKE_BUILD_TYPE "Release")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
+    message(STATUS "Build type non spécifié, utilisation de Release par défaut")
+endif()
+
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
@@ -112,6 +128,7 @@ set(HEADERS
     ${RENDERING_TEXTURE_HEADERS}
     ${UTILS_HEADERS}
 )
+
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Ajout du répertoire src/ pour les includes
@@ -122,14 +139,10 @@ target_link_libraries(${PROJECT_NAME}
     glfw
 )
 
-# Optionnel : Copier les shaders compilés dans le build directory
-# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#     ${CMAKE_SOURCE_DIR}/src/shaders/spv
-#     ${CMAKE_BINARY_DIR}/shaders/spv
-# )
+# Afficher les flags de compilation
+message(STATUS "Flags de compilation C++ : ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # Optionnel : Afficher un message de succès
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E echo "Build completed successfully!"
+    COMMAND ${CMAKE_COMMAND} -E echo "✓ Build completed successfully!"
 )

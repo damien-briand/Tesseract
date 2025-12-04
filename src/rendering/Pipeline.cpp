@@ -86,7 +86,7 @@ void Pipeline::createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayou
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    // 🆕 Depth Stencil State
+    // Depth Stencil State
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depthStencil.depthTestEnable = VK_TRUE;

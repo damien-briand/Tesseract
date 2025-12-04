@@ -15,7 +15,7 @@ class VertexBuffer;
 class IndexBuffer;
 class UniformBuffer;
 class DescriptorPool;
-class DepthBuffer;  // 🆕 Forward declaration
+class DepthBuffer;  // Forward declaration
 
 class Renderer {
 public:

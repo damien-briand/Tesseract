@@ -137,7 +137,7 @@ void SwapChain::createFramebuffers(VkRenderPass renderPass, VkImageView depthIma
     m_framebuffers.resize(m_imageViews.size());
 
     for (size_t i = 0; i < m_imageViews.size(); i++) {
-        // 🆕 Maintenant on a 2 attachments : color + depth
+        // Maintenant on a 2 attachments : color + depth
         std::array<VkImageView, 2> attachments = {
             m_imageViews[i],      // Attachment 0 : Color
             depthImageView        // Attachment 1 : Depth (partagé entre tous les framebuffers)
@@ -146,7 +146,7 @@ void SwapChain::createFramebuffers(VkRenderPass renderPass, VkImageView depthIma
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo. sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());  // 🆕 2 au lieu de 1
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());  // 2 au lieu de 1
         framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = m_extent.width;
         framebufferInfo.height = m_extent.height;

@@ -85,7 +85,7 @@ private:
         // 6. Créer le depth buffer
         m_depthBuffer = new DepthBuffer(m_device, m_swapChain);
 
-        // 7. Créer le render pass (MODIFIÉ : avec depth format)
+        // 7. Créer le render pass
         m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(), m_depthBuffer->getFormat());
 
         // 8. Créer les framebuffers (MODIFIÉ : avec depth buffer)

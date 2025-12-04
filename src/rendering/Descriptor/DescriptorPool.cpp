@@ -87,7 +87,7 @@ void DescriptorPool::createDescriptorSets(DescriptorSetLayout* layout, UniformBu
         descriptorWrites[0].descriptorCount = 1;
         descriptorWrites[0].pBufferInfo = &bufferInfo;  // Pointeur vers les infos du buffer
 
-        // 🆕 ===== WRITE 1 : Texture Sampler =====
+        // ===== WRITE 1 : Texture Sampler =====
         descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[1].dstSet = m_descriptorSets[i];
         descriptorWrites[1]. dstBinding = 1;  // Binding 1 dans le shader
