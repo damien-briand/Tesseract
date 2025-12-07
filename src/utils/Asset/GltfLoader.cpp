@@ -1,8 +1,11 @@
 #define TINYGLTF_IMPLEMENTATION
-#include "../external/tiny_gltf.h"
+#include "tiny_gltf.h"
+
 #include "GltfLoader.hpp"
+#include "TextureLoader.hpp"
 #include <iostream>
 #include <unordered_map>
+#include <filesystem>
 
 bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
     tinygltf::Model gltfModel;
@@ -26,21 +29,59 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
     }
     if (!ret) return false;
 
-    // Load images into outModel.textures (basic RGBA8 via tinygltf; for KTX2 you'd use libktx in TextureLoader)
-    for (const auto& img : gltfModel.images) {
-        TextureImage t;
-        t.path = img.uri; // may be empty for embedded
-        if (!img.image.empty()) {
-            // tinygltf loads into img.image as bytes (already decoded if image data present)
-            t.pixels = img.image;
+    namespace fs = std::filesystem;
+    fs::path basePath = fs::path(filename).parent_path();
+
+    // Map tinygltf image index -> outModel.texture index
+    std::vector<int> imageToTextureIndex;
+    imageToTextureIndex.resize(gltfModel.images.size(), -1);
+
+    // Load images: prefer external files using TextureLoader (to support KTX2)
+    for (size_t i = 0; i < gltfModel.images.size(); ++i) {
+        const tinygltf::Image &img = gltfModel.images[i];
+        int texIndex = -1;
+
+        if (!img.uri.empty()) {
+            // data uri or external file
+            if (img.uri.rfind("data:", 0) == 0) {
+                // embedded data URI -> tinygltf has decoded it into img.image
+                if (!img.image.empty()) {
+                    TextureImage t;
+                    t.path = filename + "#image" + std::to_string(i);
+                    t.width = img.width;
+                    t.height = img.height;
+                    t.mipLevels = 1;
+                    t.isKtx = false;
+                    t.isCompressed = false;
+                    t.pixels = img.image; // tinygltf stores decoded bytes here
+                    outModel.textures.push_back(std::move(t));
+                    texIndex = static_cast<int>(outModel.textures.size()) - 1;
+                }
+            } else {
+                // external file -> resolve path and use TextureLoader (handles KTX2)
+                fs::path imgPath = basePath / img.uri;
+                std::string imgPathStr = imgPath.string();
+                if (!TextureLoader::loadTextureToModel(imgPathStr, outModel, texIndex)) {
+                    std::cerr << "GltfLoader: failed to load external image: " << imgPathStr << std::endl;
+                } else {
+                    // mark sRGB for baseColor textures later when mapping materials
+                }
+            }
+        } else if (!img.image.empty()) {
+            // image loaded into memory by tinygltf (binary glb embedded images)
+            TextureImage t;
+            t.path = filename + "#image" + std::to_string(i);
             t.width = img.width;
             t.height = img.height;
             t.mipLevels = 1;
-        } else {
-            // If image is stored externally, tinygltf may have loaded it into image vector as well
-            // Otherwise you can load via stb in TextureLoader
+            t.isKtx = false;
+            t.isCompressed = false;
+            t.pixels = img.image; // decoded pixels
+            outModel.textures.push_back(std::move(t));
+            texIndex = static_cast<int>(outModel.textures.size()) - 1;
         }
-        outModel.textures.push_back(std::move(t));
+
+        imageToTextureIndex[i] = texIndex;
     }
 
     // Materials
@@ -48,12 +89,16 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
     for (const auto& m : gltfModel.materials) {
         Material mat;
         mat.name = m.name;
-        if (m.values.find("baseColorTexture") != m.values.end()) {
-            // tinygltf older API; better to use pbrMetallicRoughness in modern tinygltf
-        }
-        // Try pbrMetallicRoughness
+        // pbrMetallicRoughness
         if (m.pbrMetallicRoughness.baseColorTexture.index >= 0) {
-            mat.baseColorTextureIndex = m.pbrMetallicRoughness.baseColorTexture.index;
+            int imgIndex = m.pbrMetallicRoughness.baseColorTexture.index;
+            if (imgIndex < (int)imageToTextureIndex.size()) {
+                mat.baseColorTextureIndex = imageToTextureIndex[imgIndex];
+                // baseColor textures are color textures -> mark isSRGB if possible
+                if (mat.baseColorTextureIndex >= 0 && mat.baseColorTextureIndex < (int)outModel.textures.size()) {
+                    outModel.textures[mat.baseColorTextureIndex].isSRGB = true;
+                }
+            }
         }
         auto factor = m.pbrMetallicRoughness.baseColorFactor;
         mat.baseColorFactor = glm::vec4(
@@ -65,11 +110,12 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
         outModel.materials.push_back(std::move(mat));
     }
 
-    // Meshes (iterate gltfModel.meshes -> primitives)
+    // Meshes (iterate gltfModel.meshes -> primitives) — unchanged reading of positions/normals/texcoords/indices
     for (const auto& mesh : gltfModel.meshes) {
         for (const auto& prim : mesh.primitives) {
             Mesh outMesh;
-            // Accessors: positions, normals, texcoords, indices
+            // ... (same code as before, building vertices and indices) ...
+            // For brevity we reuse the previously implemented accessor readers
             auto readAccessorFloatVec3 = [&](int accessorIdx, std::vector<glm::vec3>& dest){
                 if (accessorIdx < 0) return;
                 const tinygltf::Accessor& acc = gltfModel.accessors[accessorIdx];
@@ -94,6 +140,7 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
                     dest[i] = glm::vec2(f[0], f[1]);
                 }
             };
+
             std::vector<glm::vec3> positions, normals;
             std::vector<glm::vec2> texcoords;
             if (prim.attributes.find("POSITION") != prim.attributes.end()) {
@@ -105,6 +152,7 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
             if (prim.attributes.find("TEXCOORD_0") != prim.attributes.end()) {
                 readAccessorFloatVec2(prim.attributes.at("TEXCOORD_0"), texcoords);
             }
+
             // indices
             std::vector<uint32_t> indices;
             if (prim.indices >= 0) {
@@ -114,7 +162,6 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
                 const unsigned char* dataPtr = buf.data.data() + bv.byteOffset + acc.byteOffset;
                 indices.resize(acc.count);
                 for (size_t i = 0; i < acc.count; ++i) {
-                    // tinygltf stores indices in various component types
                     if (acc.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
                         const uint16_t* p = reinterpret_cast<const uint16_t*>(dataPtr + i * acc.ByteStride(bv));
                         indices[i] = static_cast<uint32_t>(*p);
@@ -129,7 +176,6 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
                     }
                 }
             } else {
-                // if no indices, build a default index list
                 indices.resize(positions.size());
                 for (size_t i = 0; i < positions.size(); ++i) indices[i] = static_cast<uint32_t>(i);
             }
@@ -141,7 +187,7 @@ bool GltfLoader::loadFromFile(const std::string& filename, Model& outModel) {
                 v.position = positions[i];
                 v.normal = (i < normals.size()) ? normals[i] : glm::vec3(0.0f, 0.0f, 1.0f);
                 v.texCoord = (i < texcoords.size()) ? texcoords[i] : glm::vec2(0.0f, 0.0f);
-                v.color = glm::vec3(1.0f); // glTF materials will tint via material color
+                v.color = glm::vec3(1.0f);
                 outMesh.vertices[i] = v;
             }
             outMesh.indices = std::move(indices);

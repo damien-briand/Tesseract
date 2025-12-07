@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # Script de compilation pour Tesseract
-# Usage: ./compile.sh [ACTION] [BUILD_TYPE] [clean]
+# Usage: ./compile.sh [ACTION] [BUILD_TYPE] [clean] [WITH_KTX]
 #   ACTION: shaders|code|all (défaut: all)
 #   BUILD_TYPE: release|debug (défaut: release)
 #   clean: Efface le dossier build avant de compiler (optionnel)
+#   WITH_KTX: ON|OFF (défaut: ON)
 #
 # Exemples:
-#   ./compile.sh                    # Compile tout en Release
-#   ./compile.sh all debug          # Compile tout en Debug
-#   ./compile.sh code release       # Compile uniquement le code en Release
-#   ./compile.sh code debug clean   # Nettoie puis compile le code en Debug
-#   ./compile.sh all release clean  # Nettoie puis compile tout en Release
-#   ./compile.sh shaders            # Compile uniquement les shaders
+#   ./compile.sh                            # Compile tout en Release, WITH_KTX=ON
+#   ./compile.sh all debug                  # Compile tout en Debug, WITH_KTX=ON
+#   ./compile.sh code release clean         # Nettoie puis compile le code en Release, WITH_KTX=ON
+#   ./compile.sh all release clean OFF      # Nettoie puis compile tout en Release, WITH_KTX=OFF
+#   ./compile.sh shaders                    # Compile uniquement les shaders
 
 set -e  # Arrête le script en cas d'erreur
 
@@ -44,18 +44,21 @@ clean_build() {
 }
 
 # Fonction pour compiler le code C++
+# usage: compile_code <BuildType> <WITH_KTX>
 compile_code() {
     local build_type=$1
-    echo -e "${BLUE}=== Compilation du code C++ (${build_type}) ===${NC}"
-    cmake -B build -DCMAKE_BUILD_TYPE=${build_type}
+    local with_ktx=${2:-ON}
+    echo -e "${BLUE}=== Compilation du code C++ (${build_type}) WITH_KTX=${with_ktx} ===${NC}"
+    cmake -B build -DCMAKE_BUILD_TYPE=${build_type} -DWITH_KTX=${with_ktx}
     cmake --build build/ -j$(nproc)
-    echo -e "${GREEN}✓ Code compilé avec succès en ${build_type}${NC}"
+    echo -e "${GREEN}✓ Code compilé avec succès en ${build_type} (WITH_KTX=${with_ktx})${NC}"
 }
 
 # Déterminer l'action et le type de build
 ACTION="${1:-all}"
 BUILD_TYPE_RAW="${2:-release}"
 CLEAN_FLAG="${3:-}"
+WITH_KTX="${4:-ON}"
 
 # Vérifier si 'clean' est demandé (peut être en 2ème ou 3ème position)
 SHOULD_CLEAN=false
@@ -64,7 +67,25 @@ if [ "$BUILD_TYPE_RAW" == "clean" ]; then
     BUILD_TYPE_RAW="release"  # Utiliser release par défaut si clean est en 2ème position
 elif [ "$CLEAN_FLAG" == "clean" ]; then
     SHOULD_CLEAN=true
+    CLEAN_FLAG=""
+elif [ "$WITH_KTX" == "clean" ]; then
+    # cas improbable où clean passé en 4ème position
+    SHOULD_CLEAN=true
+    WITH_KTX="ON"
 fi
+
+# Normalize WITH_KTX to ON or OFF
+case "${WITH_KTX,,}" in
+    on|yes|1)
+        WITH_KTX="ON"
+        ;;
+    off|no|0)
+        WITH_KTX="OFF"
+        ;;
+    *)
+        # keep as provided (default ON)
+        ;;
+esac
 
 # Nettoyer si demandé
 if [ "$SHOULD_CLEAN" == true ]; then
@@ -92,25 +113,25 @@ case "$ACTION" in
         compile_shaders
         ;;
     code)
-        compile_code "$BUILD_TYPE"
+        compile_code "$BUILD_TYPE" "$WITH_KTX"
         ;;
     all)
         compile_shaders
-        compile_code "$BUILD_TYPE"
+        compile_code "$BUILD_TYPE" "$WITH_KTX"
         ;;
     *)
-        echo -e "${RED}Usage: $0 [ACTION] [BUILD_TYPE] [clean]${NC}"
+        echo -e "${RED}Usage: $0 [ACTION] [BUILD_TYPE] [clean] [WITH_KTX]${NC}"
         echo "  ACTION: shaders|code|all (défaut: all)"
         echo "  BUILD_TYPE: release|debug (défaut: release)"
         echo "  clean: Efface le dossier build avant de compiler (optionnel)"
+        echo "  WITH_KTX: ON|OFF (défaut: ON)"
         echo ""
         echo "Exemples:"
-        echo "  $0                    # Compile tout en Release"
-        echo "  $0 all debug          # Compile tout en Debug"
-        echo "  $0 code release       # Compile uniquement le code en Release"
-        echo "  $0 code debug clean   # Nettoie puis compile le code en Debug"
-        echo "  $0 all clean          # Nettoie puis compile tout en Release"
-        echo "  $0 shaders            # Compile uniquement les shaders"
+        echo "  $0                    # Compile tout en Release, WITH_KTX=ON"
+        echo "  $0 all debug          # Compile tout en Debug, WITH_KTX=ON"
+        echo "  $0 code release       # Compile uniquement le code en Release, WITH_KTX=ON"
+        echo "  $0 code debug clean   # Nettoie puis compile le code en Debug, WITH_KTX=ON"
+        echo "  $0 all release clean OFF  # Nettoie puis compile tout en Release, WITH_KTX=OFF"
         exit 1
         ;;
 esac

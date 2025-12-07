@@ -1,9 +1,12 @@
 #include "Texture.hpp"
 #include "../../core/Device.hpp"
+#include "../../utils/Asset/TextureLoader.hpp"
 #include "../Buffer/Buffer.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
+#include <filesystem>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../utils/external/stb_image.h"
@@ -41,7 +44,112 @@ Texture::~Texture()
 
 void Texture::createTextureImage(const std::string &texturePath)
 {
-    // 1. Charger l'image avec stb_image
+    namespace fs = std::filesystem;
+    std::string ext = fs::path(texturePath).extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c)
+                   { return static_cast<char>(std::tolower(c)); });
+
+    // If .ktx2 and WITH_KTX -> let TextureLoader attempt to load into a Model::TextureImage
+    if (ext == ".ktx2")
+    {
+#ifdef WITH_KTX
+        Model tmpModel;
+        int texIndex = -1;
+        bool ok = TextureLoader::loadTextureToModel(texturePath, tmpModel, texIndex);
+        if (!ok || texIndex < 0)
+        {
+            throw std::runtime_error("Failed to load KTX2 texture via libktx: " + texturePath);
+        }
+        const TextureImage &t = tmpModel.textures[texIndex];
+
+        if (!t.isCompressed && !t.pixels.empty())
+        {
+            // the KTX was decoded to raw RGBA pixels -> reuse existing upload path with t.pixels
+            m_width = t.width;
+            m_height = t.height;
+            m_mipLevels = t.mipLevels;
+            VkDeviceSize imageSize = static_cast<VkDeviceSize>(m_width) * m_height * 4;
+
+            Buffer stagingBuffer(
+                m_device,
+                imageSize,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+            stagingBuffer.copyData(t.pixels.data(), imageSize);
+
+            VkFormat imageFormat = t.isSRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+            if (!checkFormatSupport(imageFormat))
+            {
+                std::cerr << "⚠ Mipmap generation not supported, using single level" << std::endl;
+                m_mipLevels = 1;
+            }
+
+            // Create image, allocate memory and upload exactly like the standard path
+            // (reuse existing create+upload logic from the non-KTX path)
+            // -- create image
+            VkImageCreateInfo imageInfo{};
+            imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+            imageInfo.imageType = VK_IMAGE_TYPE_2D;
+            imageInfo.extent.width = m_width;
+            imageInfo.extent.height = m_height;
+            imageInfo.extent.depth = 1;
+            imageInfo.mipLevels = m_mipLevels;
+            imageInfo.arrayLayers = 1;
+            imageInfo.format = imageFormat;
+            imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+            imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+            imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+            imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+            imageInfo.flags = 0;
+
+            if (vkCreateImage(m_device->getLogicalDevice(), &imageInfo, nullptr, &m_textureImage) != VK_SUCCESS)
+            {
+                throw std::runtime_error("Failed to create texture image!");
+            }
+
+            VkMemoryRequirements memRequirements;
+            vkGetImageMemoryRequirements(m_device->getLogicalDevice(), m_textureImage, &memRequirements);
+
+            VkMemoryAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+            allocInfo.allocationSize = memRequirements.size;
+            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
+                                                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+            if (vkAllocateMemory(m_device->getLogicalDevice(), &allocInfo, nullptr, &m_textureImageMemory) != VK_SUCCESS)
+            {
+                throw std::runtime_error("Failed to allocate texture image memory!");
+            }
+
+            vkBindImageMemory(m_device->getLogicalDevice(), m_textureImage, m_textureImageMemory, 0);
+
+            // Transition all mip levels to TRANSFER_DST
+            transitionImageLayout(m_textureImage, imageFormat,
+                                  VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_mipLevels);
+
+            // Copy staging -> image (level 0)
+            copyBufferToImage(stagingBuffer.getHandle(), m_textureImage, m_width, m_height);
+
+            // Generate mipmaps if requested
+            generateMipmaps(m_textureImage, imageFormat, m_width, m_height, m_mipLevels);
+            return;
+        }
+        else
+        {
+            // The KTX contains compressed GPU data OR no usable decoded pixels.
+            // For now, we store the raw blob in TextureImage (already done by loader) but do not attempt a GPU compressed upload here.
+            // A future implementation should call libktx functions to upload compressed data to GPU (ktxTexture_VkUpload).
+            throw std::runtime_error("KTX2 texture contains compressed-only data — GPU compressed upload not yet implemented. Rebuild with KTX support and request compressed upload implementation.");
+        }
+#else
+        throw std::runtime_error("Attempt to load .ktx2 but WITH_KTX not enabled at build time.");
+#endif
+    }
+
+    // ============================ original stb_image path ============================
+    // 1. Load with stb_image
     int texChannels;
     stbi_uc *pixels = stbi_load(texturePath.c_str(),
                                 reinterpret_cast<int *>(&m_width),
@@ -56,15 +164,14 @@ void Texture::createTextureImage(const std::string &texturePath)
     VkDeviceSize imageSize = m_width * m_height * 4; // RGBA
     m_mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(m_width, m_height)))) + 1;
 
-    // Vérifier le support du format
-    VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB; // Ou SRGB selon votre préférence
+    // verify format (default SRGB for color textures)
+    VkFormat imageFormat = VK_FORMAT_R8G8B8A8_SRGB; // Or adjust if you prefer UNORM
     if (!checkFormatSupport(imageFormat))
     {
         std::cerr << "⚠ Mipmap generation not supported, using single level" << std::endl;
         m_mipLevels = 1;
     }
 
-    // 2. Créer un staging buffer et copier les pixels
     Buffer stagingBuffer(
         m_device,
         imageSize,
