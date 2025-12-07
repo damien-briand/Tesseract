@@ -1,31 +1,49 @@
-cmake_minimum_required(VERSION 3.28.3)
+cmake_minimum_required(VERSION 3.10)
 project(vulkan CXX)
 
-# C++17 minimum requis pour std::optional
+# C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Flags d'optimisation
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    # Mode Release : optimisations maximales
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
-    message(STATUS "Build type: Release (optimisations -O3 activées)")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # Mode Debug : pas d'optimisation, symboles de debug
-    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra")
-    message(STATUS "Build type: Debug (pas d'optimisation)")
-else()
-    # Par défaut : Release
-    set(CMAKE_BUILD_TYPE "Release")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
-    message(STATUS "Build type non spécifié, utilisation de Release par défaut")
+# Default build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
+# Build flags
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -flto")
+    message(STATUS "Build type: Release, flags: ${CMAKE_CXX_FLAGS_RELEASE}")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -Wall -Wextra")
+    message(STATUS "Build type: Debug")
+else()
+    message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+endif()
+
+# Options
+option(WITH_KTX "Enable KTX2 support (requires libktx installed)" ON)
+
+# Find dependencies
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
-# Liste des fichiers sources - Core
+# Try to find libktx (optional)
+if(WITH_KTX)
+  find_package(ktx QUIET)
+  if(ktx_FOUND)
+    message(STATUS "libktx found: enabling KTX2 support")
+    add_compile_definitions(WITH_KTX=1)
+  else()
+    message(STATUS "libktx not found: KTX2 support disabled")
+  endif()
+endif()
+
+# Add include for bundled headers (tinygltf, stb, etc.) if you keep them in src/utils/external
+set(EXTERNAL_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/src/utils/external)
+
+# Source lists
 set(CORE_SOURCES
     src/core/Window.cpp
     src/core/Instance.cpp
@@ -33,7 +51,6 @@ set(CORE_SOURCES
     src/core/SwapChain.cpp
 )
 
-# Liste des fichiers sources - Rendering
 set(RENDERING_SOURCES
     src/rendering/RenderPass.cpp
     src/rendering/Pipeline.cpp
@@ -41,9 +58,9 @@ set(RENDERING_SOURCES
     src/rendering/CommandBuffer.cpp
     src/rendering/DepthBuffer.cpp
     src/rendering/MSAABuffer.cpp
+    src/rendering/Texture/Texture.cpp
 )
 
-# Liste des fichiers sources - Rendering/Buffer
 set(RENDERING_BUFFER_SOURCES
     src/rendering/Buffer/Buffer.cpp
     src/rendering/Buffer/VertexBuffer.cpp
@@ -51,29 +68,36 @@ set(RENDERING_BUFFER_SOURCES
     src/rendering/Buffer/UniformBuffer.cpp
 )
 
-# Liste des fichiers sources - Rendering/Descriptor
 set(RENDERING_DESCRIPTOR_SOURCES
     src/rendering/Descriptor/DescriptorSetLayout.cpp
     src/rendering/Descriptor/DescriptorPool.cpp
 )
 
-# Liste des fichiers sources - Utils
 set(UTILS_SOURCES
     src/utils/FileUtils.cpp
     src/utils/ShaderLoader.cpp
     src/utils/VulkanUtils.cpp
     src/utils/ModelLoader.cpp
+    src/utils/Asset/AssetLoader.cpp
+    src/utils/Asset/GltfLoader.cpp
+    src/utils/Asset/TextureLoader.cpp
 )
 
-# Liste des fichiers headers (optionnel, pour IDEs)
-set(CORE_HEADERS
+set(SOURCES
+    src/main.cpp
+    ${CORE_SOURCES}
+    ${RENDERING_SOURCES}
+    ${RENDERING_BUFFER_SOURCES}
+    ${RENDERING_DESCRIPTOR_SOURCES}
+    ${UTILS_SOURCES}
+)
+
+set(HEADERS
     src/core/Window.hpp
     src/core/Instance.hpp
     src/core/Device.hpp
     src/core/SwapChain.hpp
-)
 
-set(RENDERING_HEADERS
     src/rendering/RenderPass.hpp
     src/rendering/Pipeline.hpp
     src/rendering/Renderer.hpp
@@ -81,70 +105,43 @@ set(RENDERING_HEADERS
     src/rendering/CommandBuffer.hpp
     src/rendering/DepthBuffer.hpp
     src/rendering/MSAABuffer.hpp
-)
+    src/rendering/Texture/Texture.hpp
 
-set(RENDERING_BUFFER_HEADERS
     src/rendering/Buffer/Buffer.hpp
     src/rendering/Buffer/VertexBuffer.hpp
     src/rendering/Buffer/IndexBuffer.hpp
     src/rendering/Buffer/UniformBuffer.hpp
-    src/rendering/Buffer/UniformBufferObject.hpp
-)
 
-set(RENDERING_DESCRIPTOR_HEADERS
     src/rendering/Descriptor/DescriptorSetLayout.hpp
     src/rendering/Descriptor/DescriptorPool.hpp
-)
 
-set(UTILS_HEADERS
     src/utils/FileUtils.hpp
     src/utils/ShaderLoader.hpp
     src/utils/VulkanUtils.hpp
     src/utils/ModelLoader.hpp
-)
 
-set(RENDERING_TEXTURE_SOURCES
-    src/rendering/Texture/Texture.cpp
-)
-
-set(RENDERING_TEXTURE_HEADERS
-    src/rendering/Texture/Texture.hpp
-)
-
-# Dans la section SOURCES
-set(SOURCES
-    src/main.cpp
-    ${CORE_SOURCES}
-    ${RENDERING_SOURCES}
-    ${RENDERING_BUFFER_SOURCES}
-    ${RENDERING_DESCRIPTOR_SOURCES}
-    ${RENDERING_TEXTURE_SOURCES} 
-    ${UTILS_SOURCES}
-)
-
-set(HEADERS
-    ${CORE_HEADERS}
-    ${RENDERING_HEADERS}
-    ${RENDERING_BUFFER_HEADERS}
-    ${RENDERING_DESCRIPTOR_HEADERS}
-    ${RENDERING_TEXTURE_HEADERS}
-    ${UTILS_HEADERS}
+    src/utils/Asset/AssetLoader.hpp
+    src/utils/Asset/GltfLoader.hpp
+    src/utils/Asset/TextureLoader.hpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
-# Ajout du répertoire src/ pour les includes
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+# Include dirs
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${EXTERNAL_INCLUDE})
 
-target_link_libraries(${PROJECT_NAME} 
-    Vulkan::Vulkan 
-    glfw
-)
+# Link libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::Vulkan glfw glm::glm)
 
-# Afficher les flags de compilation
-message(STATUS "Flags de compilation C++ : ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+# Link libktx if available
+if(WITH_KTX AND ktx_FOUND)
+  target_link_libraries(${PROJECT_NAME} PRIVATE ktx::ktx)
+endif()
 
-# Optionnel : Afficher un message de succès
+# If tinygltf is bundled, its header is in external; no link required (header-only)
+# If you got tinygltf via package manager, link if necessary.
+
+# Post build message
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "✓ Build completed successfully!"
 )
