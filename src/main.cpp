@@ -2,6 +2,7 @@
 #include "core/Instance.hpp"
 #include "core/Device.hpp"
 #include "core/SwapChain.hpp"
+#include "core/Camera.hpp"
 
 #include "rendering/RenderPass.hpp"
 #include "rendering/Pipeline.hpp"
@@ -17,7 +18,6 @@
 #include "rendering/Material/Material.hpp"
 #include "rendering/DepthBuffer.hpp"
 #include "rendering/MSAABuffer.hpp"
-
 
 #include "utils/ModelLoader.hpp"
 
@@ -56,6 +56,7 @@ private:
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
     Device *m_device = nullptr;
     SwapChain *m_swapChain = nullptr;
+    Camera *m_camera = nullptr;
 
     // Rendering objects
     RenderPass *m_renderPass = nullptr;
@@ -65,7 +66,7 @@ private:
     VertexBuffer *m_vertexBuffer = nullptr;
     IndexBuffer *m_indexBuffer = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
-    Material* m_material = nullptr;
+    Material *m_material = nullptr;
     DepthBuffer *m_depthBuffer = nullptr;
     DescriptorPool *m_descriptorPool = nullptr;
     Renderer *m_renderer = nullptr;
@@ -83,6 +84,16 @@ private:
 
         // 3. Créer la surface
         m_surface = m_window->createSurface(m_instance->getHandle());
+
+        // Créer la caméra
+        float aspectRatio = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
+        m_camera = new Camera(
+            glm::vec3(2.0f, 2.0f, 2.0f), // Position initiale
+            aspectRatio,                 // Aspect ratio
+            45.0f,                       // FOV
+            0.1f,                        // Near plane
+            100.0f                       // Far plane
+        );
 
         // 4.  Créer le device (physical + logical)
         m_device = new Device(m_instance->getHandle(), m_surface);
@@ -141,12 +152,11 @@ private:
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
         // 15. Charger la texture
-        m_material = new Material(m_device, 
-            "../assets/models/Cube/Color.png", 
-            "../assets/models/Cube/Normal.png", 
-            "../assets/models/Cube/Metalic.png",
-            ""
-        );
+        m_material = new Material(m_device,
+                                  "../assets/models/Cube/Color.png",
+                                  "../assets/models/Cube/Normal.png",
+                                  "../assets/models/Cube/Metalic.png",
+                                  "");
 
         // 16. Créer le descriptor pool avec texture
         m_descriptorPool = new DescriptorPool(
@@ -170,16 +180,29 @@ private:
             m_descriptorPool,
             m_msaaBuffer,
             m_depthBuffer,
-            MAX_FRAMES_IN_FLIGHT);
+            MAX_FRAMES_IN_FLIGHT,
+            m_camera);
 
         std::cout << "✓ Vulkan initialized successfully with depth buffering!" << std::endl;
     }
 
     void mainLoop()
     {
+        auto lastTime = std::chrono::high_resolution_clock::now();
+
         while (!m_window->shouldClose())
         {
+            // Calculer deltaTime
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(
+                                  currentTime - lastTime)
+                                  .count();
+            lastTime = currentTime;
+
             m_window->pollEvents();
+
+            m_camera->update(m_window, deltaTime);
+
             m_renderer->drawFrame();
         }
 
@@ -208,6 +231,7 @@ private:
         // Surface (avant device car device l'utilise)
         vkDestroySurfaceKHR(m_instance->getHandle(), m_surface, nullptr);
 
+        delete m_camera;   // Caméra
         delete m_device;   // 5.   Device
         delete m_instance; // 4.  Instance
         delete m_window;   // 3.  Window

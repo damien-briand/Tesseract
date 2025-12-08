@@ -31,6 +31,7 @@ set(CORE_SOURCES
     src/core/Instance.cpp
     src/core/Device.cpp
     src/core/SwapChain.cpp
+    src/core/Camera.cpp
 )
 
 # Liste des fichiers sources - Rendering
@@ -71,6 +72,7 @@ set(CORE_HEADERS
     src/core/Instance.hpp
     src/core/Device.hpp
     src/core/SwapChain.hpp
+    src/core/Camera.hpp
 )
 
 set(RENDERING_HEADERS
