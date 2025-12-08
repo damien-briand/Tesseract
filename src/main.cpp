@@ -14,8 +14,10 @@
 #include "rendering/Descriptor/DescriptorSetLayout.hpp"
 #include "rendering/Descriptor/DescriptorPool.hpp"
 #include "rendering/Texture/Texture.hpp"
+#include "rendering/Material/Material.hpp"
 #include "rendering/DepthBuffer.hpp"
 #include "rendering/MSAABuffer.hpp"
+
 
 #include "utils/ModelLoader.hpp"
 
@@ -64,6 +66,7 @@ private:
     IndexBuffer *m_indexBuffer = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
     Texture *m_texture = nullptr;
+    Material* m_material = nullptr;
     DepthBuffer *m_depthBuffer = nullptr;
     DescriptorPool *m_descriptorPool = nullptr;
     Renderer *m_renderer = nullptr;
@@ -139,14 +142,15 @@ private:
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
         // 15. Charger la texture
-        m_texture = new Texture(m_device, TEXTURE_PATH);
+        // m_texture = new Texture(m_device, TEXTURE_PATH);
+        m_material = new Material(m_device, "../assets/models/viking_room.png", "", "", "");
 
         // 16. Créer le descriptor pool avec texture
         m_descriptorPool = new DescriptorPool(
             m_device,
             m_descriptorSetLayout,
             m_uniformBuffer,
-            m_texture,
+            m_material,
             MAX_FRAMES_IN_FLIGHT);
 
         // 17. Créer le renderer (gère la synchronisation et le rendu)
@@ -187,6 +191,7 @@ private:
         delete m_renderer;            // 17. Renderer (sync objects)
         delete m_descriptorPool;      // 16.  Descriptor pool
         delete m_texture;             // 15. Texture
+        delete m_material;            // Material
         delete m_uniformBuffer;       // 14.  Uniform buffers
         delete m_indexBuffer;         // 13. Index buffer
         delete m_vertexBuffer;        // 12.  Vertex buffer

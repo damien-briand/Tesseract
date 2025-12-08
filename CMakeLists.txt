@@ -105,10 +105,12 @@ set(UTILS_HEADERS
 
 set(RENDERING_TEXTURE_SOURCES
     src/rendering/Texture/Texture.cpp
+    src/rendering/Material/Material.cpp
 )
 
 set(RENDERING_TEXTURE_HEADERS
     src/rendering/Texture/Texture.hpp
+    src/rendering/Material/Material.hpp
 )
 
 # Dans la section SOURCES
