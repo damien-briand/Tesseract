@@ -212,7 +212,7 @@ bool ModelLoader::loadModel(const std::string& filepath,
     }
 
     // Calculer les tangentes pour TOUS les modèles (nécessaire pour normal mapping)
-    std::cout << "  🔧 Calculating tangents for normal mapping..." << std::endl;
+    std::cout << "Calculating tangents for normal mapping..." << std::endl;
     calculateTangents(vertices, indices);
 
     std::cout << "✓ Model loaded: " << filepath << std::endl;

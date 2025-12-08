@@ -30,7 +30,7 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const std::string SHADERS_PATH = "../src/shaders/spv/";
 const std::string TEXTURE_PATH = "../assets/models/viking_room.png";
-const std::string MODEL_PATH = "../assets/models/viking_room.obj";
+const std::string MODEL_PATH = "../assets/models/Cube/Cube.obj";
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 #ifdef NDEBUG
@@ -65,7 +65,6 @@ private:
     VertexBuffer *m_vertexBuffer = nullptr;
     IndexBuffer *m_indexBuffer = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
-    Texture *m_texture = nullptr;
     Material* m_material = nullptr;
     DepthBuffer *m_depthBuffer = nullptr;
     DescriptorPool *m_descriptorPool = nullptr;
@@ -142,8 +141,12 @@ private:
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
         // 15. Charger la texture
-        // m_texture = new Texture(m_device, TEXTURE_PATH);
-        m_material = new Material(m_device, "../assets/models/viking_room.png", "", "", "");
+        m_material = new Material(m_device, 
+            "../assets/models/Cube/Color.png", 
+            "../assets/models/Cube/Normal.png", 
+            "../assets/models/Cube/Metalic.png",
+            ""
+        );
 
         // 16. Créer le descriptor pool avec texture
         m_descriptorPool = new DescriptorPool(
@@ -190,8 +193,7 @@ private:
 
         delete m_renderer;            // 17. Renderer (sync objects)
         delete m_descriptorPool;      // 16.  Descriptor pool
-        delete m_texture;             // 15. Texture
-        delete m_material;            // Material
+        delete m_material;            // 15.  Material
         delete m_uniformBuffer;       // 14.  Uniform buffers
         delete m_indexBuffer;         // 13. Index buffer
         delete m_vertexBuffer;        // 12.  Vertex buffer

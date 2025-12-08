@@ -173,11 +173,13 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
     ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
     // Matrice View : caméra face au carré
+    glm::vec3 camPos = glm::vec3(2.0f, 2.0f, 2.0f);
     ubo.view = glm::lookAt(
-        glm::vec3(2.0f, 1.0f, -1.0f), // Position : devant le carré sur l'axe Z
+        camPos,                       // Position : devant le carré sur l'axe Z
         glm::vec3(0.0f, 0.0f, 0.0f),  // Regarder vers : l'origine (centre du carré)
         glm::vec3(0.0f, 1.0f, 0.0f)   // Axe "up" : Y positif vers le haut
     );
+    ubo.camPos = camPos;
 
     // Matrice Projection : perspective avec FOV de 45°
     ubo.proj = glm::perspective(glm::radians(45.0f),
