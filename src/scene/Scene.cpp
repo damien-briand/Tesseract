@@ -45,8 +45,8 @@ void Scene::removeObject(const std::string& name) {
     }
 }
 
-void Scene::drawAll(VkCommandBuffer commandBuffer) {
+void Scene::drawAll(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
     for (auto& obj : m_objects) {
-        obj->draw(commandBuffer);
+        obj->draw(commandBuffer, pipelineLayout);
     }
 }

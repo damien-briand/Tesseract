@@ -85,9 +85,10 @@ public:
     
     /**
      * @brief Dessine cet objet dans un command buffer
-     * @param commandBuffer Command buffer Vulkan
+     * @param commandBuffer Command buffer où enregistrer les commandes
+     * @param pipelineLayout Pipeline layout utilisé (pour les push constants)
      */
-    void draw(VkCommandBuffer commandBuffer);
+    void draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 
     /**
      * @brief Vérifie si l'objet a un mesh et peut être rendu

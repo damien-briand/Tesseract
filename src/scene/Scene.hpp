@@ -42,9 +42,10 @@ public:
 
     /**
      * @brief Dessine tous les objets visibles de la scène
-     * @param commandBuffer Command buffer Vulkan
+     * @param commandBuffer Command buffer où enregistrer les commandes
+     * @param pipelineLayout Pipeline layout utilisé (pour les push constants)
      */
-    void drawAll(VkCommandBuffer commandBuffer);
+    void drawAll(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout);
 
     /**
      * @brief Retourne tous les GameObjects

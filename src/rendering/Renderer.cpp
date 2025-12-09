@@ -20,16 +20,16 @@
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
                    CommandBuffer *commandBuffer, UniformBuffer *uniformBuffer,
-                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, 
+                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
                    DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
                    Camera *camera, Scene *scene)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
       m_commandBuffer(commandBuffer), m_uniformBuffer(uniformBuffer),
-      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer), 
-      m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight), 
-      m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()), 
-      m_camera(camera), m_scene(scene)  // AJOUTER scene
+      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
+      m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
+      m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
+      m_camera(camera), m_scene(scene) // AJOUTER scene
 {
     createSyncObjects();
 }
@@ -72,10 +72,10 @@ void Renderer::drawFrame()
     updateUniformBuffer(m_currentFrame);
 
     m_commandBuffer->reset(m_currentFrame);
-    
+
     // NOUVELLE SIGNATURE (avec Scene au lieu de VertexBuffer/IndexBuffer)
-    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, 
-                           m_swapChain, m_descriptorPool, m_scene);
+    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline,
+                            m_swapChain, m_descriptorPool, m_scene);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -100,7 +100,7 @@ void Renderer::drawFrame()
     }
 
     VkPresentInfoKHR presentInfo{};
-    presentInfo. sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
@@ -153,7 +153,7 @@ void Renderer::createSyncObjects()
             vkCreateSemaphore(m_device->getLogicalDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
             vkCreateFence(m_device->getLogicalDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS)
         {
-            throw std:: runtime_error("Failed to create synchronization objects for a frame!");
+            throw std::runtime_error("Failed to create synchronization objects for a frame!");
         }
     }
 }
@@ -170,10 +170,7 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 {
     UniformBufferObject ubo{};
 
-    // Model matrix (identité, chaque objet gère sa propre transformation)
-    ubo.model = glm::mat4(1.0f);
-    
-    // View et Projection depuis la caméra
+    // Plus de matrice Model ici ! Seulement View, Proj et CamPos
     ubo.view = m_camera->getViewMatrix();
     ubo.proj = m_camera->getProjectionMatrix();
     ubo.camPos = m_camera->getPosition();

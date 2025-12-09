@@ -78,8 +78,8 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *rend
     VkDescriptorSet descriptorSet = descriptorPool->getDescriptorSet(index);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
 
-    // NOUVEAU :  Dessiner tous les objets de la scène
-    scene->drawAll(commandBuffer);
+    // Dessiner tous les objets de la scène
+    scene->drawAll(commandBuffer, pipeline->getLayout());
 
     vkCmdEndRenderPass(commandBuffer);
 
