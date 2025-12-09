@@ -17,6 +17,7 @@ class UniformBuffer;
 class DescriptorPool;
 class DepthBuffer;
 class MSAABuffer;
+class Camera;
 
 class Renderer
 {
@@ -26,7 +27,7 @@ public:
              CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
              IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
              DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
-             uint32_t maxFramesInFlight);
+             uint32_t maxFramesInFlight, Camera* camera);
     ~Renderer();
 
     // Suppression de la copie
@@ -50,6 +51,7 @@ private:
     DescriptorPool *m_descriptorPool;
     DepthBuffer *m_depthBuffer;
     MSAABuffer *m_msaaBuffer;
+    Camera* m_camera;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;

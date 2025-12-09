@@ -12,6 +12,7 @@
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include "../core/Window.hpp"
+#include "../core/Camera.hpp"
 #include <stdexcept>
 #include <limits>
 #include <glm/glm.hpp>
@@ -22,14 +23,14 @@ Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
                    IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
                    DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
-                   uint32_t maxFramesInFlight)
+                   uint32_t maxFramesInFlight, Camera *camera)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
       m_commandBuffer(commandBuffer), m_vertexBuffer(vertexBuffer),
       m_indexBuffer(indexBuffer), m_uniformBuffer(uniformBuffer),
       m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer), m_depthBuffer(depthBuffer),
       m_maxFramesInFlight(maxFramesInFlight), m_currentFrame(0),
-      m_startTime(std::chrono::high_resolution_clock::now())
+      m_startTime(std::chrono::high_resolution_clock::now()), m_camera(camera)
 {
     createSyncObjects();
 }
@@ -112,7 +113,12 @@ void Renderer::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window->wasResized())
     {
+        int width, height;
+        m_window->getFramebufferSize(&width, &height);
+        m_camera->updateAspectRatio(static_cast<float>(width),
+                                    static_cast<float>(height));
         m_window->resetResizedFlag();
+
         recreateSwapChain();
     }
     else if (result != VK_SUCCESS)
@@ -170,21 +176,15 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 
     // Matrice Model : rotation autour de l'axe Z
     // ubo.model = glm::mat4(1.0f); // Pas de rotation pour l'instant
-    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    ubo.model = glm::rotate(
+        glm::mat4(1.0f),
+        glm::radians(-90.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f));
 
     // Matrice View : caméra face au carré
-    glm::vec3 camPos = glm::vec3(2.0f, 2.0f, 2.0f);
-    ubo.view = glm::lookAt(
-        camPos,                       // Position : devant le carré sur l'axe Z
-        glm::vec3(0.0f, 0.0f, 0.0f),  // Regarder vers : l'origine (centre du carré)
-        glm::vec3(0.0f, 1.0f, 0.0f)   // Axe "up" : Y positif vers le haut
-    );
-    ubo.camPos = camPos;
-
-    // Matrice Projection : perspective avec FOV de 45°
-    ubo.proj = glm::perspective(glm::radians(45.0f),
-                                m_swapChain->getExtent().width / (float)m_swapChain->getExtent().height,
-                                0.01f, 100.0f);
+    ubo.view = m_camera->getViewMatrix();
+    ubo.proj = m_camera->getProjectionMatrix();
+    ubo.camPos = m_camera->getPosition();
 
     // GLM a été conçu pour OpenGL où Y est inversé
     ubo.proj[1][1] *= -1;
