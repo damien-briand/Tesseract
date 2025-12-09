@@ -1,0 +1,52 @@
+#include "Scene.hpp"
+#include "GameObject.hpp"
+#include <algorithm>
+#include <iostream>
+
+Scene::Scene(Device* device)
+    : m_device(device)
+{
+}
+
+Scene::~Scene() {
+    // Les unique_ptr se nettoient automatiquement
+}
+
+GameObject* Scene::createGameObject(const std::string& name) {
+    // Vérifier qu'un objet avec ce nom n'existe pas déjà
+    if (findObjectByName(name) != nullptr) {
+        std::cerr << "GameObject '" << name << "' already exists!" << std::endl;
+        return findObjectByName(name);
+    }
+
+    m_objects.push_back(std::make_unique<GameObject>(name, m_device));
+    std::cout << "✓ GameObject '" << name << "' created" << std::endl;
+    return m_objects.back().get();
+}
+
+GameObject* Scene:: findObjectByName(const std:: string& name) {
+    auto it = std::find_if(m_objects.begin(), m_objects.end(),
+        [&name](const std::unique_ptr<GameObject>& obj) {
+            return obj->getName() == name;
+        });
+
+    return (it != m_objects.end()) ? it->get() : nullptr;
+}
+
+void Scene::removeObject(const std::string& name) {
+    auto it = std:: remove_if(m_objects.begin(), m_objects.end(),
+        [&name](const std::unique_ptr<GameObject>& obj) {
+            return obj->getName() == name;
+        });
+
+    if (it != m_objects.end()) {
+        m_objects. erase(it, m_objects.end());
+        std::cout << "✓ GameObject '" << name << "' removed" << std::endl;
+    }
+}
+
+void Scene::drawAll(VkCommandBuffer commandBuffer) {
+    for (auto& obj : m_objects) {
+        obj->draw(commandBuffer);
+    }
+}

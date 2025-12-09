@@ -3,8 +3,6 @@
 #include "Pipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "MSAABuffer.hpp"
-#include "Buffer/VertexBuffer.hpp"
-#include "Buffer/IndexBuffer.hpp"
 #include "Buffer/UniformBuffer.hpp"
 #include "Buffer/UniformBufferObject.hpp"
 #include "Descriptor/DescriptorPool.hpp"
@@ -13,6 +11,7 @@
 #include "../core/SwapChain.hpp"
 #include "../core/Window.hpp"
 #include "../core/Camera.hpp"
+#include "../scene/Scene.hpp"
 #include <stdexcept>
 #include <limits>
 #include <glm/glm.hpp>
@@ -20,17 +19,17 @@
 
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
-                   CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
-                   IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
-                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
-                   uint32_t maxFramesInFlight, Camera *camera)
+                   CommandBuffer *commandBuffer, UniformBuffer *uniformBuffer,
+                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, 
+                   DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
+                   Camera *camera, Scene *scene)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
-      m_commandBuffer(commandBuffer), m_vertexBuffer(vertexBuffer),
-      m_indexBuffer(indexBuffer), m_uniformBuffer(uniformBuffer),
-      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer), m_depthBuffer(depthBuffer),
-      m_maxFramesInFlight(maxFramesInFlight), m_currentFrame(0),
-      m_startTime(std::chrono::high_resolution_clock::now()), m_camera(camera)
+      m_commandBuffer(commandBuffer), m_uniformBuffer(uniformBuffer),
+      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer), 
+      m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight), 
+      m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()), 
+      m_camera(camera), m_scene(scene)  // AJOUTER scene
 {
     createSyncObjects();
 }
@@ -70,12 +69,13 @@ void Renderer::drawFrame()
 
     vkResetFences(m_device->getLogicalDevice(), 1, &m_inFlightFences[m_currentFrame]);
 
-    // NOUVEAU : Mettre à jour le uniform buffer
     updateUniformBuffer(m_currentFrame);
 
     m_commandBuffer->reset(m_currentFrame);
-    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, m_swapChain,
-                            m_vertexBuffer, m_indexBuffer, m_descriptorPool);
+    
+    // NOUVELLE SIGNATURE (avec Scene au lieu de VertexBuffer/IndexBuffer)
+    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, 
+                           m_swapChain, m_descriptorPool, m_scene);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -100,7 +100,7 @@ void Renderer::drawFrame()
     }
 
     VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo. sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
@@ -153,7 +153,7 @@ void Renderer::createSyncObjects()
             vkCreateSemaphore(m_device->getLogicalDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]) != VK_SUCCESS ||
             vkCreateFence(m_device->getLogicalDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS)
         {
-            throw std::runtime_error("Failed to create synchronization objects for a frame!");
+            throw std:: runtime_error("Failed to create synchronization objects for a frame!");
         }
     }
 }
@@ -168,26 +168,15 @@ void Renderer::recreateSwapChain()
 
 void Renderer::updateUniformBuffer(uint32_t currentFrame)
 {
-    // Calculer le temps écoulé depuis le démarrage
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - m_startTime).count();
-
     UniformBufferObject ubo{};
 
-    // Matrice Model : rotation autour de l'axe Z
-    // ubo.model = glm::mat4(1.0f); // Pas de rotation pour l'instant
-    ubo.model = glm::rotate(
-        glm::mat4(1.0f),
-        glm::radians(-90.0f),
-        glm::vec3(1.0f, 0.0f, 0.0f));
-
-    // Matrice View : caméra face au carré
+    // Model matrix (identité, chaque objet gère sa propre transformation)
+    ubo.model = glm::mat4(1.0f);
+    
+    // View et Projection depuis la caméra
     ubo.view = m_camera->getViewMatrix();
     ubo.proj = m_camera->getProjectionMatrix();
     ubo.camPos = m_camera->getPosition();
-
-    // GLM a été conçu pour OpenGL où Y est inversé
-    ubo.proj[1][1] *= -1;
 
     // Copier les données dans le uniform buffer
     m_uniformBuffer->updateUniformBuffer(currentFrame, ubo);

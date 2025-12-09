@@ -1,11 +1,10 @@
 #include "CommandBuffer.hpp"
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
-#include "Buffer/VertexBuffer.hpp"
-#include "Buffer/IndexBuffer.hpp"
 #include "Descriptor/DescriptorPool.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
+#include "../scene/Scene.hpp"
 #include <stdexcept>
 #include <array>
 
@@ -29,9 +28,10 @@ void CommandBuffer::reset(uint32_t index)
     vkResetCommandBuffer(m_commandBuffers[index], 0);
 }
 
+// NOUVELLE SIGNATURE
 void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *renderPass,
-                           Pipeline *pipeline, SwapChain *swapChain, VertexBuffer *vertexBuffer,
-                           IndexBuffer *indexBuffer, DescriptorPool *descriptorPool)
+                           Pipeline *pipeline, SwapChain *swapChain,
+                           DescriptorPool *descriptorPool, Scene *scene)
 {
     VkCommandBuffer commandBuffer = m_commandBuffers[index];
 
@@ -40,7 +40,7 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *rend
 
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to begin recording command buffer!");
+        throw std:: runtime_error("Failed to begin recording command buffer!");
     }
 
     VkRenderPassBeginInfo renderPassInfo{};
@@ -51,21 +51,19 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *rend
     renderPassInfo.renderArea.extent = swapChain->getExtent();
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}}; // Clear color : noir
-    constexpr float DEPTH_CLEAR_VALUE = 1.0f;          // Le plus loin
-    clearValues[1].depthStencil = {DEPTH_CLEAR_VALUE, 0};
+    clearValues[0]. color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clearValues[1].depthStencil = {1.0f, 0};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getHandle());
 
     VkViewport viewport{};
-    viewport.x = 0.0f;
+    viewport. x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = static_cast<float>(swapChain->getExtent().width);
+    viewport. width = static_cast<float>(swapChain->getExtent().width);
     viewport.height = static_cast<float>(swapChain->getExtent().height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
@@ -76,18 +74,12 @@ void CommandBuffer::record(uint32_t index, uint32_t imageIndex, RenderPass *rend
     scissor.extent = swapChain->getExtent();
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    // Binder le vertex buffer
-    vertexBuffer->bind(commandBuffer);
-
-    // Binder l'index buffer
-    indexBuffer->bind(commandBuffer);
-
-    // NOUVEAU : Binder le descriptor set
+    // Binder le descriptor set
     VkDescriptorSet descriptorSet = descriptorPool->getDescriptorSet(index);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
 
-    // Draw
-    vkCmdDrawIndexed(commandBuffer, indexBuffer->getIndexCount(), 1, 0, 0, 0);
+    // NOUVEAU :  Dessiner tous les objets de la scène
+    scene->drawAll(commandBuffer);
 
     vkCmdEndRenderPass(commandBuffer);
 
