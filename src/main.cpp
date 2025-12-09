@@ -88,12 +88,9 @@ private:
         // Créer la caméra
         float aspectRatio = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
         m_camera = new Camera(
-            glm::vec3(2.0f, 2.0f, 2.0f), // Position initiale
-            aspectRatio,                 // Aspect ratio
-            45.0f,                       // FOV
-            0.1f,                        // Near plane
-            100.0f                       // Far plane
-        );
+            glm::vec3(0.0f, 0.0f, 0.0f), // Pivot au centre
+            5.0f,                        // Distance initiale
+            static_cast<float>(WIDTH) / static_cast<float>(HEIGHT));
 
         // 4.  Créer le device (physical + logical)
         m_device = new Device(m_instance->getHandle(), m_surface);

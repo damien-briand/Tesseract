@@ -6,34 +6,41 @@
 #include <string>
 #include <functional>
 
-class Window {
+class Window
+{
 public:
-    Window(uint32_t width, uint32_t height, const std::string& title);
+    Window(uint32_t width, uint32_t height, const std::string &title);
     ~Window();
 
     // Suppression de la copie
-    Window(const Window&) = delete;
-    Window& operator=(const Window&) = delete;
+    Window(const Window &) = delete;
+    Window &operator=(const Window &) = delete;
 
     // Getters
-    GLFWwindow* getHandle() const { return m_window; }
+    GLFWwindow *getHandle() const { return m_window; }
     uint32_t getWidth() const { return m_width; }
     uint32_t getHeight() const { return m_height; }
     bool shouldClose() const;
     bool wasResized() const { return m_framebufferResized; }
     void resetResizedFlag() { m_framebufferResized = false; }
 
+    double getScrollOffsetY() const { return m_scrollOffsetY; }
+    void resetScrollOffset() { m_scrollOffsetY = 0.0; }
+
     // Méthodes
     void pollEvents();
     VkSurfaceKHR createSurface(VkInstance instance);
-    void getFramebufferSize(int* width, int* height);
+    void getFramebufferSize(int *width, int *height);
 
 private:
-    GLFWwindow* m_window;
+    GLFWwindow *m_window;
     uint32_t m_width;
     uint32_t m_height;
     std::string m_title;
     bool m_framebufferResized;
 
-    static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+    double m_scrollOffsetY;
+
+    static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
+    static void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
 };
