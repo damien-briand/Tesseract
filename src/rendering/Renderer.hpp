@@ -11,23 +11,22 @@ class RenderPass;
 class Pipeline;
 class CommandBuffer;
 class Window;
-class VertexBuffer;
-class IndexBuffer;
 class UniformBuffer;
 class DescriptorPool;
 class DepthBuffer;
 class MSAABuffer;
 class Camera;
+class Scene;
 
 class Renderer
 {
-public:
+public: 
     Renderer(Device *device, SwapChain *swapChain, Window *window,
              RenderPass *renderPass, Pipeline *pipeline,
-             CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
-             IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
-             DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
-             uint32_t maxFramesInFlight, Camera* camera);
+             CommandBuffer *commandBuffer, UniformBuffer *uniformBuffer,
+             DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, 
+             DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
+             Camera* camera, Scene* scene);
     ~Renderer();
 
     // Suppression de la copie
@@ -45,13 +44,12 @@ private:
     RenderPass *m_renderPass;
     Pipeline *m_pipeline;
     CommandBuffer *m_commandBuffer;
-    VertexBuffer *m_vertexBuffer;
-    IndexBuffer *m_indexBuffer;
     UniformBuffer *m_uniformBuffer;
     DescriptorPool *m_descriptorPool;
     DepthBuffer *m_depthBuffer;
     MSAABuffer *m_msaaBuffer;
     Camera* m_camera;
+    Scene* m_scene;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;
@@ -60,7 +58,7 @@ private:
     std::vector<VkSemaphore> m_renderFinishedSemaphores;
     std::vector<VkFence> m_inFlightFences;
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime;
+    std::chrono::time_point<std::chrono:: high_resolution_clock> m_startTime;
 
     void createSyncObjects();
     void recreateSwapChain();

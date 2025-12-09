@@ -32,6 +32,8 @@ set(CORE_SOURCES
     src/core/Device.cpp
     src/core/SwapChain.cpp
     src/core/Camera.cpp
+    src/scene/GameObject.cpp
+    src/scene/Scene.cpp
 )
 
 # Liste des fichiers sources - Rendering
@@ -73,6 +75,8 @@ set(CORE_HEADERS
     src/core/Device.hpp
     src/core/SwapChain.hpp
     src/core/Camera.hpp
+    src/scene/GameObject.hpp
+    src/scene/Scene.hpp
 )
 
 set(RENDERING_HEADERS
