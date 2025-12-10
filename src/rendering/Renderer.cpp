@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
-#include "CommandBuffer.hpp"
+#include "ThreadedCommandBuffer.hpp"
 #include "MSAABuffer.hpp"
 #include "Buffer/UniformBuffer.hpp"
 #include "Buffer/UniformBufferObject.hpp"
@@ -19,17 +19,19 @@
 
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
-                   CommandBuffer *commandBuffer, UniformBuffer *uniformBuffer,
+                   ThreadedCommandBuffer *commandBuffer,
+                   UniformBuffer *uniformBuffer,
                    DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
                    DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
                    Camera *camera, Scene *scene)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
-      m_commandBuffer(commandBuffer), m_uniformBuffer(uniformBuffer),
+      m_commandBuffer(commandBuffer),
+      m_uniformBuffer(uniformBuffer),
       m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
       m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
       m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
-      m_camera(camera), m_scene(scene) // AJOUTER scene
+      m_camera(camera), m_scene(scene)
 {
     createSyncObjects();
 }
@@ -71,9 +73,7 @@ void Renderer::drawFrame()
 
     updateUniformBuffer(m_currentFrame);
 
-    m_commandBuffer->reset(m_currentFrame);
-
-    // NOUVELLE SIGNATURE (avec Scene au lieu de VertexBuffer/IndexBuffer)
+    // Cette fonction enregistre les command buffers en parallèle
     m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline,
                             m_swapChain, m_descriptorPool, m_scene);
 
@@ -87,7 +87,8 @@ void Renderer::drawFrame()
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-    VkCommandBuffer cmdBuffer = m_commandBuffer->getBuffer(m_currentFrame);
+
+    VkCommandBuffer cmdBuffer = m_commandBuffer->getPrimaryCommandBuffer(m_currentFrame);
     submitInfo.pCommandBuffers = &cmdBuffer;
 
     VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[m_currentFrame]};
@@ -170,7 +171,7 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 {
     UniformBufferObject ubo{};
 
-    // Plus de matrice Model ici ! Seulement View, Proj et CamPos
+    // View et Projection depuis la caméra
     ubo.view = m_camera->getViewMatrix();
     ubo.proj = m_camera->getProjectionMatrix();
     ubo.camPos = m_camera->getPosition();

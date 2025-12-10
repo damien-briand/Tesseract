@@ -8,7 +8,7 @@
 #include "rendering/Pipeline.hpp"
 #include "rendering/Renderer.hpp"
 #include "rendering/Vertex.hpp"
-#include "rendering/CommandBuffer.hpp"
+#include "rendering/ThreadedCommandBuffer.hpp"
 #include "rendering/Buffer/UniformBuffer.hpp"
 #include "rendering/Descriptor/DescriptorSetLayout.hpp"
 #include "rendering/Descriptor/DescriptorPool.hpp"
@@ -58,7 +58,7 @@ private:
     RenderPass *m_renderPass = nullptr;
     DescriptorSetLayout *m_descriptorSetLayout = nullptr;
     Pipeline *m_pipeline = nullptr;
-    CommandBuffer *m_commandBuffer = nullptr;
+    ThreadedCommandBuffer *m_commandBuffer = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
     Material *m_material = nullptr;
     DepthBuffer *m_depthBuffer = nullptr;
@@ -85,8 +85,8 @@ private:
         // 4. Créer la caméra
         float aspectRatio = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
         m_camera = new Camera(
-            glm::vec3(0.0f, 0.0f, 0.0f),  // Pivot au centre
-            8.0f,                          // Distance initiale (plus loin pour voir plusieurs objets)
+            glm::vec3(0.0f, 0.0f, 0.0f), // Pivot au centre
+            8.0f,                        // Distance initiale (plus loin pour voir plusieurs objets)
             aspectRatio);
 
         // 5. Créer le device (physical + logical)
@@ -105,7 +105,7 @@ private:
         m_depthBuffer = new DepthBuffer(m_device, m_swapChain, m_msaaSamples);
 
         // 9. Créer le render pass
-        m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(), 
+        m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(),
                                       m_depthBuffer->getFormat(), m_msaaSamples);
 
         // 10. Créer les framebuffers
@@ -123,11 +123,11 @@ private:
             m_descriptorSetLayout,
             m_swapChain->getExtent(),
             SHADERS_PATH + "vert.spv",
-            SHADERS_PATH + "frag.spv", 
+            SHADERS_PATH + "frag.spv",
             m_msaaSamples);
 
         // 13. Créer les command buffers
-        m_commandBuffer = new CommandBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
+        m_commandBuffer = new ThreadedCommandBuffer(m_device, 4, MAX_FRAMES_IN_FLIGHT);
 
         // 14. Créer les uniform buffers
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
@@ -146,7 +146,6 @@ private:
             m_uniformBuffer,
             m_material,
             MAX_FRAMES_IN_FLIGHT);
-
 
         m_scene = new Scene(m_device);
 
@@ -168,7 +167,7 @@ private:
             m_camera,
             m_scene);
 
-        std::cout << "✓ Vulkan initialized successfully with " 
+        std::cout << "✓ Vulkan initialized successfully with "
                   << m_scene->getObjectCount() << " objects!" << std::endl;
     }
 
@@ -178,28 +177,28 @@ private:
     void createMultipleObjects()
     {
         // Objet 1 : Cube au centre
-        GameObject* cube1 = m_scene->createGameObject("Cube_Center");
+        GameObject *cube1 = m_scene->createGameObject("Cube_Center");
         cube1->loadMeshFromFile("../assets/models/Cube/Cube.obj");
         cube1->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
         cube1->setMaterial(m_material);
 
         // Objet 2 : Cube à gauche
-        GameObject* cube2 = m_scene->createGameObject("Cube_Left");
+        GameObject *cube2 = m_scene->createGameObject("Cube_Left");
         cube2->loadMeshFromFile("../assets/models/Cube/Cube.obj");
         cube2->setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
         cube2->setRotation(glm::vec3(0.0f, 0.0f, 45.0f));
         cube2->setMaterial(m_material);
 
         // Objet 3 : Cube à droite
-        GameObject* cube3 = m_scene->createGameObject("Cube_Right");
+        GameObject *cube3 = m_scene->createGameObject("Cube_Right");
         cube3->loadMeshFromFile("../assets/models/Cube/Cube.obj");
-        cube3->setPosition(glm:: vec3(2.5f, 0.0f, 0.0f));
-        cube3->setRotation(glm:: vec3(45.0f, 0.0f, 0.0f));
+        cube3->setPosition(glm::vec3(2.5f, 0.0f, 0.0f));
+        cube3->setRotation(glm::vec3(45.0f, 0.0f, 0.0f));
         cube3->setUniformScale(0.7f);
         cube3->setMaterial(m_material);
 
         // Objet 4 : Cube en haut
-        GameObject* cube4 = m_scene->createGameObject("Cube_Top");
+        GameObject *cube4 = m_scene->createGameObject("Cube_Top");
         cube4->loadMeshFromFile("../assets/models/Cube/Cube.obj");
         cube4->setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
         cube4->setRotation(glm::vec3(0.0f, 45.0f, 0.0f));
@@ -207,7 +206,7 @@ private:
         cube4->setMaterial(m_material);
 
         // Objet 5 : Cube en bas
-        GameObject* cube5 = m_scene->createGameObject("Cube_Bottom");
+        GameObject *cube5 = m_scene->createGameObject("Cube_Bottom");
         cube5->loadMeshFromFile("../assets/models/Cube/Cube.obj");
         cube5->setPosition(glm::vec3(0.0f, -2.5f, 0.0f));
         cube5->setRotation(glm::vec3(30.0f, 30.0f, 30.0f));
@@ -221,11 +220,11 @@ private:
     {
         auto lastTime = std::chrono::high_resolution_clock::now();
 
-        while (! m_window->shouldClose())
+        while (!m_window->shouldClose())
         {
             // Calculer deltaTime
             auto currentTime = std::chrono::high_resolution_clock::now();
-            float deltaTime = std::chrono::duration<float, std::chrono:: seconds::period>(
+            float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(
                                   currentTime - lastTime)
                                   .count();
             lastTime = currentTime;
@@ -240,7 +239,7 @@ private:
 
     void cleanup()
     {
-        // L'ordre de destruction est important ! 
+        // L'ordre de destruction est important !
         delete m_renderer;            // 17. Renderer
         delete m_scene;               // NOUVEAU : Scene (contient les GameObjects)
         delete m_descriptorPool;      // 16. Descriptor pool
@@ -257,10 +256,10 @@ private:
         // Surface (avant device car device l'utilise)
         vkDestroySurfaceKHR(m_instance->getHandle(), m_surface, nullptr);
 
-        delete m_camera;              // 6. Caméra
-        delete m_device;              // 5. Device
-        delete m_instance;            // 4. Instance
-        delete m_window;              // 3. Window
+        delete m_camera;   // 6. Caméra
+        delete m_device;   // 5. Device
+        delete m_instance; // 4. Instance
+        delete m_window;   // 3. Window
 
         std::cout << "✓ Cleanup completed!" << std::endl;
     }
@@ -276,7 +275,7 @@ int main()
     }
     catch (const std::exception &e)
     {
-        std::cerr << "✗ Error: " << e. what() << std::endl;
+        std::cerr << "✗ Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 
