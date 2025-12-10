@@ -42,6 +42,7 @@ set(RENDERING_SOURCES
     src/rendering/Pipeline.cpp
     src/rendering/Renderer.cpp
     src/rendering/CommandBuffer.cpp
+    src/rendering/ThreadedCommandBuffer.cpp
     src/rendering/DepthBuffer.cpp
     src/rendering/MSAABuffer.cpp
 )
@@ -85,6 +86,7 @@ set(RENDERING_HEADERS
     src/rendering/Renderer.hpp
     src/rendering/Vertex.hpp
     src/rendering/CommandBuffer.hpp
+    src/rendering/ThreadedCommandBuffer.hpp
     src/rendering/DepthBuffer.hpp
     src/rendering/MSAABuffer.hpp
 )
