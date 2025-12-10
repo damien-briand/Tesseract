@@ -49,6 +49,9 @@ set(CORE_SOURCES
     src/core/Instance.cpp
     src/core/Device.cpp
     src/core/SwapChain.cpp
+    src/core/Camera.cpp
+    src/scene/GameObject.cpp
+    src/scene/Scene.cpp
 )
 
 set(RENDERING_SOURCES
@@ -97,6 +100,10 @@ set(HEADERS
     src/core/Instance.hpp
     src/core/Device.hpp
     src/core/SwapChain.hpp
+    src/core/Camera.hpp
+    src/scene/GameObject.hpp
+    src/scene/Scene.hpp
+)
 
     src/rendering/RenderPass.hpp
     src/rendering/Pipeline.hpp
@@ -119,10 +126,36 @@ set(HEADERS
     src/utils/ShaderLoader.hpp
     src/utils/VulkanUtils.hpp
     src/utils/ModelLoader.hpp
+)
 
-    src/utils/Asset/AssetLoader.hpp
-    src/utils/Asset/GltfLoader.hpp
-    src/utils/Asset/TextureLoader.hpp
+set(RENDERING_TEXTURE_SOURCES
+    src/rendering/Texture/Texture.cpp
+    src/rendering/Material/Material.cpp
+)
+
+set(RENDERING_TEXTURE_HEADERS
+    src/rendering/Texture/Texture.hpp
+    src/rendering/Material/Material.hpp
+)
+
+# Dans la section SOURCES
+set(SOURCES
+    src/main.cpp
+    ${CORE_SOURCES}
+    ${RENDERING_SOURCES}
+    ${RENDERING_BUFFER_SOURCES}
+    ${RENDERING_DESCRIPTOR_SOURCES}
+    ${RENDERING_TEXTURE_SOURCES} 
+    ${UTILS_SOURCES}
+)
+
+set(HEADERS
+    ${CORE_HEADERS}
+    ${RENDERING_HEADERS}
+    ${RENDERING_BUFFER_HEADERS}
+    ${RENDERING_DESCRIPTOR_HEADERS}
+    ${RENDERING_TEXTURE_HEADERS}
+    ${UTILS_HEADERS}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

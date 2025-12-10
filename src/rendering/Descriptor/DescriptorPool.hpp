@@ -6,7 +6,7 @@
 class Device;
 class DescriptorSetLayout;
 class UniformBuffer;
-class Texture;
+class Material;
 
 /**
  * @brief Gère le pool de descriptors et les descriptor sets
@@ -14,7 +14,7 @@ class Texture;
 class DescriptorPool {
 public:
     DescriptorPool(Device* device, DescriptorSetLayout* layout, 
-                   UniformBuffer* uniformBuffer, Texture* texture,
+                   UniformBuffer* uniformBuffer, Material* material,
                    uint32_t framesInFlight);
     ~DescriptorPool();
 
@@ -27,12 +27,12 @@ public:
 
 private:
     Device* m_device;
-    Texture* m_texture;
+    Material* m_material;
     VkDescriptorPool m_descriptorPool;
     std::vector<VkDescriptorSet> m_descriptorSets;
 
     void createDescriptorPool(uint32_t framesInFlight);
     
     void createDescriptorSets(DescriptorSetLayout* layout, UniformBuffer* uniformBuffer,
-                              Texture* texture, uint32_t framesInFlight);
+                              Material* material, uint32_t framesInFlight);
 };

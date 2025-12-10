@@ -3,8 +3,6 @@
 #include "Pipeline.hpp"
 #include "CommandBuffer.hpp"
 #include "MSAABuffer.hpp"
-#include "Buffer/VertexBuffer.hpp"
-#include "Buffer/IndexBuffer.hpp"
 #include "Buffer/UniformBuffer.hpp"
 #include "Buffer/UniformBufferObject.hpp"
 #include "Descriptor/DescriptorPool.hpp"
@@ -12,6 +10,8 @@
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
 #include "../core/Window.hpp"
+#include "../core/Camera.hpp"
+#include "../scene/Scene.hpp"
 #include <stdexcept>
 #include <limits>
 #include <glm/glm.hpp>
@@ -19,17 +19,17 @@
 
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
-                   CommandBuffer *commandBuffer, VertexBuffer *vertexBuffer,
-                   IndexBuffer *indexBuffer, UniformBuffer *uniformBuffer,
-                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer, DepthBuffer *depthBuffer,
-                   uint32_t maxFramesInFlight)
+                   CommandBuffer *commandBuffer, UniformBuffer *uniformBuffer,
+                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
+                   DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
+                   Camera *camera, Scene *scene)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
-      m_commandBuffer(commandBuffer), m_vertexBuffer(vertexBuffer),
-      m_indexBuffer(indexBuffer), m_uniformBuffer(uniformBuffer),
-      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer), m_depthBuffer(depthBuffer),
-      m_maxFramesInFlight(maxFramesInFlight), m_currentFrame(0),
-      m_startTime(std::chrono::high_resolution_clock::now())
+      m_commandBuffer(commandBuffer), m_uniformBuffer(uniformBuffer),
+      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
+      m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
+      m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
+      m_camera(camera), m_scene(scene) // AJOUTER scene
 {
     createSyncObjects();
 }
@@ -69,12 +69,13 @@ void Renderer::drawFrame()
 
     vkResetFences(m_device->getLogicalDevice(), 1, &m_inFlightFences[m_currentFrame]);
 
-    // NOUVEAU : Mettre à jour le uniform buffer
     updateUniformBuffer(m_currentFrame);
 
     m_commandBuffer->reset(m_currentFrame);
-    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline, m_swapChain,
-                            m_vertexBuffer, m_indexBuffer, m_descriptorPool);
+
+    // NOUVELLE SIGNATURE (avec Scene au lieu de VertexBuffer/IndexBuffer)
+    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline,
+                            m_swapChain, m_descriptorPool, m_scene);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -112,7 +113,12 @@ void Renderer::drawFrame()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window->wasResized())
     {
+        int width, height;
+        m_window->getFramebufferSize(&width, &height);
+        m_camera->updateAspectRatio(static_cast<float>(width),
+                                    static_cast<float>(height));
         m_window->resetResizedFlag();
+
         recreateSwapChain();
     }
     else if (result != VK_SUCCESS)
@@ -162,30 +168,12 @@ void Renderer::recreateSwapChain()
 
 void Renderer::updateUniformBuffer(uint32_t currentFrame)
 {
-    // Calculer le temps écoulé depuis le démarrage
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - m_startTime).count();
-
     UniformBufferObject ubo{};
 
-    // Matrice Model : rotation autour de l'axe Z
-    // ubo.model = glm::mat4(1.0f); // Pas de rotation pour l'instant
-    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-    // Matrice View : caméra face au carré
-    ubo.view = glm::lookAt(
-        glm::vec3(2.0f, 1.0f, -1.0f), // Position : devant le carré sur l'axe Z
-        glm::vec3(0.0f, 0.0f, 0.0f),  // Regarder vers : l'origine (centre du carré)
-        glm::vec3(0.0f, 1.0f, 0.0f)   // Axe "up" : Y positif vers le haut
-    );
-
-    // Matrice Projection : perspective avec FOV de 45°
-    ubo.proj = glm::perspective(glm::radians(45.0f),
-                                m_swapChain->getExtent().width / (float)m_swapChain->getExtent().height,
-                                0.01f, 100.0f);
-
-    // GLM a été conçu pour OpenGL où Y est inversé
-    ubo.proj[1][1] *= -1;
+    // Plus de matrice Model ici ! Seulement View, Proj et CamPos
+    ubo.view = m_camera->getViewMatrix();
+    ubo.proj = m_camera->getProjectionMatrix();
+    ubo.camPos = m_camera->getPosition();
 
     // Copier les données dans le uniform buffer
     m_uniformBuffer->updateUniformBuffer(currentFrame, ubo);
