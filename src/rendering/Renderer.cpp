@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
-#include "AdvancedCommandRecorder.hpp" // CHANGÉ
+#include "AdvancedCommandRecorder.hpp"
 #include "MSAABuffer.hpp"
 #include "Buffer/UniformBuffer.hpp"
 #include "Buffer/UniformBufferObject.hpp"
@@ -12,6 +12,7 @@
 #include "../core/Window.hpp"
 #include "../core/Camera.hpp"
 #include "../scene/Scene.hpp"
+#include "../scene/LightManager.hpp"
 #include <stdexcept>
 #include <limits>
 #include <glm/glm.hpp>
@@ -19,19 +20,19 @@
 
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
-                   AdvancedCommandRecorder *commandRecorder, // CHANGÉ
+                   AdvancedCommandRecorder *commandRecorder,
                    UniformBuffer *uniformBuffer,
                    DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
                    DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
-                   Camera *camera, Scene *scene)
+                   Camera *camera, Scene *scene, LightManager *lightManager)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
-      m_commandRecorder(commandRecorder), // CHANGÉ
+      m_commandRecorder(commandRecorder),
       m_uniformBuffer(uniformBuffer),
       m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
       m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
       m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
-      m_camera(camera), m_scene(scene)
+      m_camera(camera), m_scene(scene), m_lightManager(lightManager)
 {
     createSyncObjects();
 }
@@ -176,9 +177,23 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 {
     UniformBufferObject ubo{};
 
+    // Matrices de transformation
     ubo.view = m_camera->getViewMatrix();
     ubo.proj = m_camera->getProjectionMatrix();
     ubo.camPos = m_camera->getPosition();
 
+    // Informations de lumière
+    ubo.lightCount = m_lightManager->getLightCount();
+    ubo.ambientColor = m_lightManager->getAmbientColor();
+    ubo.ambientIntensity = m_lightManager->getAmbientIntensity();
+    
+    // Paramètres de rendu
+    ubo.exposure = 1.0f;
+    ubo.scaleIBLAmbient = 1.0f;
+
+    // Copier dans le uniform buffer
     m_uniformBuffer->updateUniformBuffer(currentFrame, ubo);
+
+    // Mettre à jour le storage buffer des lumières
+    m_lightManager->updateGPUBuffer();
 }

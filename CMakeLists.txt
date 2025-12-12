@@ -35,6 +35,8 @@ set(CORE_SOURCES
     src/core/ThreadPool.cpp
     src/scene/GameObject.cpp
     src/scene/Scene.cpp
+    src/scene/Light.cpp
+    src/scene/LightManager.cpp 
 )
 
 # Liste des fichiers sources - Rendering
@@ -80,6 +82,8 @@ set(CORE_HEADERS
     src/core/ThreadPool.hpp
     src/scene/GameObject.hpp
     src/scene/Scene.hpp
+    src/scene/Light.hpp
+    src/scene/LightManager.hpp
 )
 
 set(RENDERING_HEADERS
