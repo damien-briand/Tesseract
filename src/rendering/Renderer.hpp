@@ -9,6 +9,7 @@ class Device;
 class SwapChain;
 class RenderPass;
 class Pipeline;
+class AdvancedCommandRecorder; // CHANGÉ
 class Window;
 class UniformBuffer;
 class DescriptorPool;
@@ -16,14 +17,13 @@ class DepthBuffer;
 class MSAABuffer;
 class Camera;
 class Scene;
-class ThreadedCommandBuffer;
 
 class Renderer
 {
 public:
     Renderer(Device *device, SwapChain *swapChain, Window *window,
              RenderPass *renderPass, Pipeline *pipeline,
-             ThreadedCommandBuffer *commandBuffer,
+             AdvancedCommandRecorder *commandRecorder, // CHANGÉ
              UniformBuffer *uniformBuffer,
              DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
              DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
@@ -44,7 +44,7 @@ private:
     Window *m_window;
     RenderPass *m_renderPass;
     Pipeline *m_pipeline;
-    ThreadedCommandBuffer *m_commandBuffer;
+    AdvancedCommandRecorder *m_commandRecorder; // CHANGÉ
     UniformBuffer *m_uniformBuffer;
     DescriptorPool *m_descriptorPool;
     DepthBuffer *m_depthBuffer;

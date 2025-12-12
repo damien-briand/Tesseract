@@ -1,7 +1,7 @@
 #include "Renderer.hpp"
 #include "RenderPass.hpp"
 #include "Pipeline.hpp"
-#include "ThreadedCommandBuffer.hpp"
+#include "AdvancedCommandRecorder.hpp" // CHANGÉ
 #include "MSAABuffer.hpp"
 #include "Buffer/UniformBuffer.hpp"
 #include "Buffer/UniformBufferObject.hpp"
@@ -19,14 +19,14 @@
 
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    RenderPass *renderPass, Pipeline *pipeline,
-                   ThreadedCommandBuffer *commandBuffer,
+                   AdvancedCommandRecorder *commandRecorder, // CHANGÉ
                    UniformBuffer *uniformBuffer,
                    DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
                    DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
                    Camera *camera, Scene *scene)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
-      m_commandBuffer(commandBuffer),
+      m_commandRecorder(commandRecorder), // CHANGÉ
       m_uniformBuffer(uniformBuffer),
       m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
       m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
@@ -73,9 +73,15 @@ void Renderer::drawFrame()
 
     updateUniformBuffer(m_currentFrame);
 
-    // Cette fonction enregistre les command buffers en parallèle
-    m_commandBuffer->record(m_currentFrame, imageIndex, m_renderPass, m_pipeline,
-                            m_swapChain, m_descriptorPool, m_scene);
+    // CHANGÉ :  Utiliser AdvancedCommandRecorder
+    m_commandRecorder->record(
+        m_currentFrame,
+        imageIndex,
+        m_renderPass,
+        m_pipeline,
+        m_swapChain,
+        m_descriptorPool,
+        m_scene);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -87,8 +93,7 @@ void Renderer::drawFrame()
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-
-    VkCommandBuffer cmdBuffer = m_commandBuffer->getPrimaryCommandBuffer(m_currentFrame);
+    VkCommandBuffer cmdBuffer = m_commandRecorder->getPrimaryCommandBuffer(m_currentFrame);
     submitInfo.pCommandBuffers = &cmdBuffer;
 
     VkSemaphore signalSemaphores[] = {m_renderFinishedSemaphores[m_currentFrame]};
@@ -171,11 +176,9 @@ void Renderer::updateUniformBuffer(uint32_t currentFrame)
 {
     UniformBufferObject ubo{};
 
-    // View et Projection depuis la caméra
     ubo.view = m_camera->getViewMatrix();
     ubo.proj = m_camera->getProjectionMatrix();
     ubo.camPos = m_camera->getPosition();
 
-    // Copier les données dans le uniform buffer
     m_uniformBuffer->updateUniformBuffer(currentFrame, ubo);
 }
