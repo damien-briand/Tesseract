@@ -32,6 +32,7 @@ set(CORE_SOURCES
     src/core/Device.cpp
     src/core/SwapChain.cpp
     src/core/Camera.cpp
+    src/core/ThreadPool.cpp
     src/scene/GameObject.cpp
     src/scene/Scene.cpp
 )
@@ -42,7 +43,7 @@ set(RENDERING_SOURCES
     src/rendering/Pipeline.cpp
     src/rendering/Renderer.cpp
     src/rendering/CommandBuffer.cpp
-    src/rendering/ThreadedCommandBuffer.cpp
+    src/rendering/AdvancedCommandRecorder.cpp
     src/rendering/DepthBuffer.cpp
     src/rendering/MSAABuffer.cpp
 )
@@ -76,6 +77,7 @@ set(CORE_HEADERS
     src/core/Device.hpp
     src/core/SwapChain.hpp
     src/core/Camera.hpp
+    src/core/ThreadPool.hpp
     src/scene/GameObject.hpp
     src/scene/Scene.hpp
 )
@@ -86,7 +88,7 @@ set(RENDERING_HEADERS
     src/rendering/Renderer.hpp
     src/rendering/Vertex.hpp
     src/rendering/CommandBuffer.hpp
-    src/rendering/ThreadedCommandBuffer.hpp
+     src/rendering/AdvancedCommandRecorder.hpp
     src/rendering/DepthBuffer.hpp
     src/rendering/MSAABuffer.hpp
 )

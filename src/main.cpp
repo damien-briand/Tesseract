@@ -3,12 +3,13 @@
 #include "core/Device.hpp"
 #include "core/SwapChain.hpp"
 #include "core/Camera.hpp"
+#include "core/ThreadPool.hpp" // NOUVEAU
 
 #include "rendering/RenderPass.hpp"
 #include "rendering/Pipeline.hpp"
 #include "rendering/Renderer.hpp"
 #include "rendering/Vertex.hpp"
-#include "rendering/ThreadedCommandBuffer.hpp"
+#include "rendering/AdvancedCommandRecorder.hpp" // NOUVEAU
 #include "rendering/Buffer/UniformBuffer.hpp"
 #include "rendering/Descriptor/DescriptorSetLayout.hpp"
 #include "rendering/Descriptor/DescriptorPool.hpp"
@@ -23,9 +24,11 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
+#include <chrono>
+#include <iomanip>
 
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WIDTH = 480;
+const uint32_t HEIGHT = 480;
 const std::string SHADERS_PATH = "../src/shaders/spv/";
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -53,12 +56,13 @@ private:
     Device *m_device = nullptr;
     SwapChain *m_swapChain = nullptr;
     Camera *m_camera = nullptr;
+    ThreadPool *m_threadPool = nullptr; // NOUVEAU
 
     // Rendering objects
     RenderPass *m_renderPass = nullptr;
     DescriptorSetLayout *m_descriptorSetLayout = nullptr;
     Pipeline *m_pipeline = nullptr;
-    ThreadedCommandBuffer *m_commandBuffer = nullptr;
+    AdvancedCommandRecorder *m_commandRecorder = nullptr; // NOUVEAU
     UniformBuffer *m_uniformBuffer = nullptr;
     Material *m_material = nullptr;
     DepthBuffer *m_depthBuffer = nullptr;
@@ -68,13 +72,20 @@ private:
     MSAABuffer *m_msaaBuffer = nullptr;
     VkSampleCountFlagBits m_msaaSamples;
 
-    // NOUVEAU : Scene au lieu de VertexBuffer/IndexBuffer
+    // Scene
     Scene *m_scene = nullptr;
+
+    // Statistiques
+    float m_fps = 0.0f;
+    float m_frameTime = 0.0f;
+    uint32_t m_frameCount = 0;
 
     void initVulkan()
     {
+        printHeader("TESSERACT ENGINE - ADVANCED MULTITHREADING");
+
         // 1. Créer la fenêtre
-        m_window = new Window(WIDTH, HEIGHT, "Tesseract - Multiple Objects");
+        m_window = new Window(WIDTH, HEIGHT, "Tesseract - Advanced Multithreading");
 
         // 2. Créer l'instance Vulkan
         m_instance = new Instance("Tesseract", enableValidationLayers);
@@ -82,41 +93,42 @@ private:
         // 3. Créer la surface
         m_surface = m_window->createSurface(m_instance->getHandle());
 
-        // 4. Créer la caméra
+        // 4. NOUVEAU : Créer le Thread Pool (0 = auto-detect CPU cores)
+        m_threadPool = new ThreadPool(0);
+
+        // 5. Créer la caméra
         float aspectRatio = static_cast<float>(WIDTH) / static_cast<float>(HEIGHT);
         m_camera = new Camera(
-            glm::vec3(0.0f, 0.0f, 0.0f), // Pivot au centre
-            8.0f,                        // Distance initiale (plus loin pour voir plusieurs objets)
+            glm::vec3(0.0f, 0.0f, 0.0f),
+            15.0f,
             aspectRatio);
 
-        // 5. Créer le device (physical + logical)
+        // 6. Créer le device
         m_device = new Device(m_instance->getHandle(), m_surface);
-
-        // Déterminer le nombre de samples MSAA supportés
         m_msaaSamples = m_device->getMaxUsableSampleCount();
 
-        // 6. Créer la swapchain
+        // 7. Créer la swapchain
         m_swapChain = new SwapChain(m_device, m_surface, m_window);
 
-        // 7. Créer le buffer MSAA
+        // 8. Créer le buffer MSAA
         m_msaaBuffer = new MSAABuffer(m_device, m_swapChain, m_msaaSamples);
 
-        // 8. Créer le depth buffer
+        // 9. Créer le depth buffer
         m_depthBuffer = new DepthBuffer(m_device, m_swapChain, m_msaaSamples);
 
-        // 9. Créer le render pass
+        // 10. Créer le render pass
         m_renderPass = new RenderPass(m_device, m_swapChain->getImageFormat(),
                                       m_depthBuffer->getFormat(), m_msaaSamples);
 
-        // 10. Créer les framebuffers
+        // 11. Créer les framebuffers
         m_swapChain->createFramebuffers(m_renderPass->getHandle(),
                                         m_msaaBuffer->getImageView(),
                                         m_depthBuffer->getImageView());
 
-        // 11. Créer le descriptor set layout
+        // 12. Créer le descriptor set layout
         m_descriptorSetLayout = new DescriptorSetLayout(m_device);
 
-        // 12. Créer le pipeline graphique
+        // 13. Créer le pipeline graphique
         m_pipeline = new Pipeline(
             m_device,
             m_renderPass,
@@ -126,20 +138,20 @@ private:
             SHADERS_PATH + "frag.spv",
             m_msaaSamples);
 
-        // 13. Créer les command buffers
-        m_commandBuffer = new ThreadedCommandBuffer(m_device, 4, MAX_FRAMES_IN_FLIGHT);
+        // 14. NOUVEAU : Créer l'Advanced Command Recorder
+        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT);
 
-        // 14. Créer les uniform buffers
+        // 15. Créer les uniform buffers
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
 
-        // 15. Charger le material
+        // 16. Charger le material
         m_material = new Material(m_device,
                                   "../assets/models/Cube/Color.png",
                                   "../assets/models/Cube/Normal.png",
                                   "../assets/models/Cube/Metalic.png",
                                   "");
 
-        // 16. Créer le descriptor pool
+        // 17. Créer le descriptor pool
         m_descriptorPool = new DescriptorPool(
             m_device,
             m_descriptorSetLayout,
@@ -147,18 +159,18 @@ private:
             m_material,
             MAX_FRAMES_IN_FLIGHT);
 
+        // 18. Créer la scène
         m_scene = new Scene(m_device);
+        createLargeScene();
 
-        createMultipleObjects();
-
-        // 17. Créer le renderer (MODIFIÉ : sans VertexBuffer/IndexBuffer, avec Scene)
+        // 19. Créer le renderer
         m_renderer = new Renderer(
             m_device,
             m_swapChain,
             m_window,
             m_renderPass,
             m_pipeline,
-            m_commandBuffer,
+            m_commandRecorder,
             m_uniformBuffer,
             m_descriptorPool,
             m_msaaBuffer,
@@ -167,101 +179,148 @@ private:
             m_camera,
             m_scene);
 
-        std::cout << "✓ Vulkan initialized successfully with "
-                  << m_scene->getObjectCount() << " objects!" << std::endl;
+        printSummary();
     }
 
-    // ========================================================================
-    // Fonction pour créer plusieurs objets
-    // ========================================================================
-    void createMultipleObjects()
+    void createLargeScene()
     {
-        // Objet 1 : Cube au centre
-        GameObject *cube1 = m_scene->createGameObject("Cube_Center");
-        cube1->loadMeshFromFile("../assets/models/Cube/Cube.obj");
-        cube1->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-        cube1->setMaterial(m_material);
+        // Créer une GRANDE grille pour tester les performances
+        const int GRID_SIZE = 5; // 25 objets !
+        const float SPACING = 3.0f;
 
-        // Objet 2 : Cube à gauche
-        GameObject *cube2 = m_scene->createGameObject("Cube_Left");
-        cube2->loadMeshFromFile("../assets/models/Cube/Cube.obj");
-        cube2->setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
-        cube2->setRotation(glm::vec3(0.0f, 0.0f, 45.0f));
-        cube2->setMaterial(m_material);
+        std::cout << "\nCreating scene (" << GRID_SIZE << "x" << GRID_SIZE << " = "
+                  << (GRID_SIZE * GRID_SIZE) << " objects)..." << std::endl;
 
-        // Objet 3 : Cube à droite
-        GameObject *cube3 = m_scene->createGameObject("Cube_Right");
-        cube3->loadMeshFromFile("../assets/models/Cube/Cube.obj");
-        cube3->setPosition(glm::vec3(2.5f, 0.0f, 0.0f));
-        cube3->setRotation(glm::vec3(45.0f, 0.0f, 0.0f));
-        cube3->setUniformScale(0.7f);
-        cube3->setMaterial(m_material);
+        for (int x = 0; x < GRID_SIZE; x++)
+        {
+            for (int z = 0; z < GRID_SIZE; z++)
+            {
+                std::string name = "Cube_" + std::to_string(x) + "_" + std::to_string(z);
+                GameObject *cube = m_scene->createGameObject(name);
+                cube->loadMeshFromFile("../assets/models/Cube/Cube.obj");
 
-        // Objet 4 : Cube en haut
-        GameObject *cube4 = m_scene->createGameObject("Cube_Top");
-        cube4->loadMeshFromFile("../assets/models/Cube/Cube.obj");
-        cube4->setPosition(glm::vec3(0.0f, 2.5f, 0.0f));
-        cube4->setRotation(glm::vec3(0.0f, 45.0f, 0.0f));
-        cube4->setUniformScale(1.2f);
-        cube4->setMaterial(m_material);
+                float posX = (x - GRID_SIZE / 2.0f) * SPACING;
+                float posZ = (z - GRID_SIZE / 2.0f) * SPACING;
+                float posY = std::sin(x * 0.5f) * std::cos(z * 0.5f) * 2.0f;
+                cube->setPosition(glm::vec3(posX, posY, posZ));
 
-        // Objet 5 : Cube en bas
-        GameObject *cube5 = m_scene->createGameObject("Cube_Bottom");
-        cube5->loadMeshFromFile("../assets/models/Cube/Cube.obj");
-        cube5->setPosition(glm::vec3(0.0f, -2.5f, 0.0f));
-        cube5->setRotation(glm::vec3(30.0f, 30.0f, 30.0f));
-        cube5->setUniformScale(0.5f);
-        cube5->setMaterial(m_material);
+                cube->setRotation(glm::vec3(x * 5.0f, z * 5.0f, (x + z) * 3.0f));
 
-        std::cout << "✓ Created " << m_scene->getObjectCount() << " game objects" << std::endl;
+                float scale = 0.6f + (std::sin(x * 0.3f + z * 0.3f) * 0.3f);
+                cube->setUniformScale(scale);
+
+                cube->setMaterial(m_material);
+            }
+        }
+
+        std::cout << "✓ Scene created successfully" << std::endl;
     }
 
     void mainLoop()
     {
+        printHeader("MAIN LOOP STARTED");
+
         auto lastTime = std::chrono::high_resolution_clock::now();
+        auto lastFPSTime = lastTime;
 
         while (!m_window->shouldClose())
         {
-            // Calculer deltaTime
             auto currentTime = std::chrono::high_resolution_clock::now();
             float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(
                                   currentTime - lastTime)
                                   .count();
             lastTime = currentTime;
 
+            // Calcul du FPS
+            m_frameCount++;
+            float timeSinceFPS = std::chrono::duration<float, std::chrono::seconds::period>(
+                                     currentTime - lastFPSTime)
+                                     .count();
+
+            if (timeSinceFPS >= 1.0f)
+            {
+                m_fps = m_frameCount / timeSinceFPS;
+                m_frameTime = timeSinceFPS / m_frameCount * 1000.0f;
+
+                // Afficher les stats
+                const auto &stats = m_commandRecorder->getStats();
+
+                std::cout << "\r"
+                          << "FPS:  " << std::setw(6) << std::fixed << std::setprecision(1) << m_fps
+                          << " | Frame:  " << std::setw(5) << std::setprecision(2) << m_frameTime << "ms"
+                          << " | Record: " << std::setw(5) << std::setprecision(2) << stats.lastRecordTime << "ms"
+                          << " | Objects: " << std::setw(4) << stats.objectsRendered
+                          << " | Threads: " << stats.threadsUsed
+                          << " | Pending: " << std::setw(2) << m_threadPool->getPendingTasks()
+                          << std::flush;
+
+                m_frameCount = 0;
+                lastFPSTime = currentTime;
+            }
+
             m_window->pollEvents();
             m_camera->update(m_window, deltaTime);
             m_renderer->drawFrame();
         }
+
+        std::cout << std::endl;
+        printHeader("MAIN LOOP ENDED");
 
         m_renderer->waitIdle();
     }
 
     void cleanup()
     {
-        // L'ordre de destruction est important !
-        delete m_renderer;            // 17. Renderer
-        delete m_scene;               // NOUVEAU : Scene (contient les GameObjects)
-        delete m_descriptorPool;      // 16. Descriptor pool
-        delete m_material;            // 15. Material
-        delete m_uniformBuffer;       // 14. Uniform buffers
-        delete m_commandBuffer;       // 13. Command buffers
-        delete m_pipeline;            // 12. Pipeline
-        delete m_descriptorSetLayout; // 11. Descriptor set layout
-        delete m_renderPass;          // 10. Render pass
-        delete m_swapChain;           // 9. SwapChain
-        delete m_msaaBuffer;          // 8. MSAA buffer
-        delete m_depthBuffer;         // 7. Depth buffer
+        std::cout << "\nStarting cleanup..." << std::endl;
 
-        // Surface (avant device car device l'utilise)
+        delete m_renderer;
+        delete m_scene;
+        delete m_descriptorPool;
+        delete m_material;
+        delete m_uniformBuffer;
+        delete m_commandRecorder; // Advanced Command Recorder
+        delete m_pipeline;
+        delete m_descriptorSetLayout;
+        delete m_renderPass;
+        delete m_swapChain;
+        delete m_msaaBuffer;
+        delete m_depthBuffer;
+
         vkDestroySurfaceKHR(m_instance->getHandle(), m_surface, nullptr);
 
-        delete m_camera;   // 6. Caméra
-        delete m_device;   // 5. Device
-        delete m_instance; // 4. Instance
-        delete m_window;   // 3. Window
+        delete m_camera;
 
-        std::cout << "✓ Cleanup completed!" << std::endl;
+        // IMPORTANT :  Détruire le thread pool AVANT le device
+        if (m_threadPool)
+        {
+            delete m_threadPool;
+        }
+
+        delete m_device;
+        delete m_instance;
+        delete m_window;
+
+        printHeader("CLEANUP COMPLETED");
+    }
+
+    // Helpers d'affichage
+    void printHeader(const std::string &title)
+    {
+        std::cout << "\n╔════════════════════════════════════════════════════════╗" << std::endl;
+        std::cout << "║  " << std::left << std::setw(52) << title << "  ║" << std::endl;
+        std::cout << "╚════════════════════════════════════════════════════════╝" << std::endl;
+    }
+
+    void printSummary()
+    {
+        std::cout << "\n╔════════════════════════════════════════════════════════╗" << std::endl;
+        std::cout << "║              INITIALIZATION SUMMARY                    ║" << std::endl;
+        std::cout << "╠════════════════════════════════════════════════════════╣" << std::endl;
+        std::cout << "║  Objects in scene:      " << std::setw(28) << std::right << m_scene->getObjectCount() << "  ║" << std::endl;
+        std::cout << "║  Worker threads:       " << std::setw(28) << m_threadPool->getThreadCount() << "  ║" << std::endl;
+        std::cout << "║  MSAA samples:         " << std::setw(28) << m_msaaSamples << "  ║" << std::endl;
+        std::cout << "║  Frames in flight:     " << std::setw(28) << MAX_FRAMES_IN_FLIGHT << "  ║" << std::endl;
+        std::cout << "╚════════════════════════════════════════════════════════╝" << std::endl;
     }
 };
 
@@ -275,7 +334,7 @@ int main()
     }
     catch (const std::exception &e)
     {
-        std::cerr << "✗ Error: " << e.what() << std::endl;
+        std::cerr << "\n✗ FATAL ERROR: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 
