@@ -3,13 +3,13 @@
 #include "core/Device.hpp"
 #include "core/SwapChain.hpp"
 #include "core/Camera.hpp"
-#include "core/ThreadPool.hpp" // NOUVEAU
+#include "core/ThreadPool.hpp" 
 
 #include "rendering/RenderPass.hpp"
 #include "rendering/Pipeline.hpp"
 #include "rendering/Renderer.hpp"
 #include "rendering/Vertex.hpp"
-#include "rendering/AdvancedCommandRecorder.hpp" // NOUVEAU
+#include "rendering/AdvancedCommandRecorder.hpp" 
 #include "rendering/Buffer/UniformBuffer.hpp"
 #include "rendering/Descriptor/DescriptorSetLayout.hpp"
 #include "rendering/Descriptor/DescriptorPool.hpp"
@@ -56,13 +56,13 @@ private:
     Device *m_device = nullptr;
     SwapChain *m_swapChain = nullptr;
     Camera *m_camera = nullptr;
-    ThreadPool *m_threadPool = nullptr; // NOUVEAU
+    ThreadPool *m_threadPool = nullptr; 
 
     // Rendering objects
     RenderPass *m_renderPass = nullptr;
     DescriptorSetLayout *m_descriptorSetLayout = nullptr;
     Pipeline *m_pipeline = nullptr;
-    AdvancedCommandRecorder *m_commandRecorder = nullptr; // NOUVEAU
+    AdvancedCommandRecorder *m_commandRecorder = nullptr; 
     UniformBuffer *m_uniformBuffer = nullptr;
     Material *m_material = nullptr;
     DepthBuffer *m_depthBuffer = nullptr;

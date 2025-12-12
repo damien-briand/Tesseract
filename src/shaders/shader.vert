@@ -7,7 +7,7 @@ layout(binding = 0) uniform UniformBufferObject {
     vec3 camPos;
 } ubo;
 
-// NOUVEAU : Push Constant pour la matrice Model de chaque objet
+// Push Constant pour la matrice Model de chaque objet
 layout(push_constant) uniform PushConstants {
     mat4 model;
 } push;

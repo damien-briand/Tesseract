@@ -107,7 +107,7 @@ void GameObject::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLa
     m_vertexBuffer->bind(commandBuffer);
     m_indexBuffer->bind(commandBuffer);
 
-    // NOUVEAU : Pousser la matrice Model de cet objet
+    // Pousser la matrice Model de cet objet
     glm::mat4 modelMatrix = getModelMatrix();
     vkCmdPushConstants(
         commandBuffer,

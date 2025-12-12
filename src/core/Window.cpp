@@ -17,7 +17,7 @@ Window::Window(uint32_t width, uint32_t height, const std::string &title)
 
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
-    glfwSetScrollCallback(m_window, scrollCallback); // NOUVEAU
+    glfwSetScrollCallback(m_window, scrollCallback); 
 }
 
 Window::~Window()
