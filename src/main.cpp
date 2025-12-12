@@ -336,10 +336,10 @@ private:
         std::cout << "\n╔════════════════════════════════════════════════════════╗" << std::endl;
         std::cout << "║              INITIALIZATION SUMMARY                    ║" << std::endl;
         std::cout << "╠════════════════════════════════════════════════════════╣" << std::endl;
-        std::cout << "║  Objects:               " << std::setw(28) << std::right << m_scene->getObjectCount() << "  ║" << std::endl;
-        std::cout << "║  Lights:               " << std::setw(28) << m_lightManager->getLightCount() << "  ║" << std::endl;
-        std::cout << "║  Worker threads:       " << std::setw(28) << m_threadPool->getThreadCount() << "  ║" << std::endl;
-        std::cout << "║  MSAA samples:         " << std::setw(28) << m_msaaSamples << "  ║" << std::endl;
+        std::cout << "║  Objects:               " << std::setw(28) << std::right << m_scene->getObjectCount() << "   ║" << std::endl;
+        std::cout << "║  Lights:               " << std::setw(28) << m_lightManager->getLightCount() << "    ║" << std::endl;
+        std::cout << "║  Worker threads:       " << std::setw(28) << m_threadPool->getThreadCount() << "    ║" << std::endl;
+        std::cout << "║  MSAA samples:         " << std::setw(28) << m_msaaSamples << "    ║" << std::endl;
         std::cout << "╚════════════════════════════════════════════════════════╝" << std::endl;
     }
 };
