@@ -9,7 +9,7 @@ class Device;
 class SwapChain;
 class RenderPass;
 class Pipeline;
-class AdvancedCommandRecorder; // CHANGÉ
+class AdvancedCommandRecorder;
 class Window;
 class UniformBuffer;
 class DescriptorPool;
@@ -17,17 +17,18 @@ class DepthBuffer;
 class MSAABuffer;
 class Camera;
 class Scene;
+class LightManager;
 
 class Renderer
 {
 public:
     Renderer(Device *device, SwapChain *swapChain, Window *window,
              RenderPass *renderPass, Pipeline *pipeline,
-             AdvancedCommandRecorder *commandRecorder, // CHANGÉ
+             AdvancedCommandRecorder *commandRecorder,
              UniformBuffer *uniformBuffer,
              DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
              DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
-             Camera *camera, Scene *scene);
+             Camera *camera, Scene *scene, LightManager *lightManager);
     ~Renderer();
 
     // Suppression de la copie
@@ -44,13 +45,14 @@ private:
     Window *m_window;
     RenderPass *m_renderPass;
     Pipeline *m_pipeline;
-    AdvancedCommandRecorder *m_commandRecorder; // CHANGÉ
+    AdvancedCommandRecorder *m_commandRecorder;
     UniformBuffer *m_uniformBuffer;
     DescriptorPool *m_descriptorPool;
     DepthBuffer *m_depthBuffer;
     MSAABuffer *m_msaaBuffer;
     Camera *m_camera;
     Scene *m_scene;
+    LightManager *m_lightManager;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;

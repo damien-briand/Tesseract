@@ -38,6 +38,14 @@ public:
      */
     VkSampleCountFlagBits getMaxUsableSampleCount() const;
 
+    /**
+     * @brief Trouve un type de mémoire compatible avec les requirements
+     * @param typeFilter Filtre des types de mémoire
+     * @param properties Propriétés requises
+     * @return Index du type de mémoire trouvé
+     */
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
     // Méthodes utilitaires
     void waitIdle() const;
 
