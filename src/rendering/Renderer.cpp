@@ -13,6 +13,7 @@
 #include "../core/Camera.hpp"
 #include "../scene/Scene.hpp"
 #include "../scene/LightManager.hpp"
+#include "../utils/ImGuiManager.hpp"
 #include <stdexcept>
 #include <limits>
 #include <glm/glm.hpp>
@@ -24,7 +25,8 @@ Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
                    UniformBuffer *uniformBuffer,
                    DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
                    DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
-                   Camera *camera, Scene *scene, LightManager *lightManager)
+                   Camera *camera, Scene *scene, LightManager *lightManager,
+                   ImGuiManager *imguiManager)
     : m_device(device), m_swapChain(swapChain), m_window(window),
       m_renderPass(renderPass), m_pipeline(pipeline),
       m_commandRecorder(commandRecorder),
@@ -32,7 +34,8 @@ Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
       m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
       m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
       m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
-      m_camera(camera), m_scene(scene), m_lightManager(lightManager)
+      m_camera(camera), m_scene(scene), m_lightManager(lightManager),
+      m_imguiManager(imguiManager)
 {
     createSyncObjects();
 }
@@ -82,7 +85,8 @@ void Renderer::drawFrame()
         m_pipeline,
         m_swapChain,
         m_descriptorPool,
-        m_scene);
+        m_scene,
+        m_imguiManager);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

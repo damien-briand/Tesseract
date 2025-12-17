@@ -22,6 +22,9 @@
 #include "scene/Light.hpp"       
 #include "scene/LightManager.hpp"
 
+#include "utils/ImGuiManager.hpp"
+#include "utils/StatsWindow.hpp"
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -77,6 +80,10 @@ private:
     // Scene
     Scene *m_scene = nullptr;
     LightManager *m_lightManager = nullptr; 
+
+    // ImGui
+    ImGuiManager *m_imguiManager = nullptr;
+    StatsWindow *m_statsWindow = nullptr;
 
     // Statistiques
     float m_fps = 0.0f;
@@ -140,13 +147,25 @@ private:
         m_scene = new Scene(m_device);
         createLargeScene();
 
-        // Créer le renderer AVEC le light manager
+        // Créer le renderer AVEC le light manager (sans ImGui d'abord)
         m_renderer = new Renderer(m_device, m_swapChain, m_window,
                                   m_renderPass, m_pipeline, m_commandRecorder,
                                   m_uniformBuffer, m_descriptorPool,
                                   m_msaaBuffer, m_depthBuffer,
                                   MAX_FRAMES_IN_FLIGHT, m_camera, m_scene,
-                                  m_lightManager); 
+                                  m_lightManager, nullptr); 
+
+        // Initialiser ImGui (après le renderer)
+        m_imguiManager = new ImGuiManager(m_instance, m_device, m_window,
+                                          m_renderPass, MAX_FRAMES_IN_FLIGHT,
+                                          m_msaaSamples);
+
+        // Donner ImGuiManager au Renderer
+        m_renderer->setImGuiManager(m_imguiManager);
+
+        // Créer et ajouter la fenêtre de stats
+        m_statsWindow = new StatsWindow(m_commandRecorder, m_lightManager, m_scene);
+        m_imguiManager->addWindow(std::unique_ptr<ImGuiWindow>(m_statsWindow));
 
         printSummary();
     }
@@ -265,6 +284,9 @@ private:
                 m_fps = m_frameCount / timeSinceFPS;
                 m_frameTime = timeSinceFPS / m_frameCount * 1000.0f;
 
+                // Mettre à jour les stats ImGui
+                m_statsWindow->updateStats(m_fps, m_frameTime);
+
                 const auto &stats = m_commandRecorder->getStats();
 
                 std::cout << "\r"
@@ -293,6 +315,9 @@ private:
     void cleanup()
     {
         std::cout << "\nStarting cleanup..." << std::endl;
+
+        delete m_imguiManager;  // Nettoyer ImGui en premier (doit être avant le renderPass)
+        m_statsWindow = nullptr;  // Déjà détruit par m_imguiManager
 
         delete m_renderer;
         delete m_scene;

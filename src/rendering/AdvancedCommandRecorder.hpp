@@ -11,6 +11,7 @@ class SwapChain;
 class DescriptorPool;
 class Scene;
 class ThreadPool;
+class ImGuiManager;
 
 /**
  * @brief Enregistrement avancé de command buffers avec thread pool
@@ -20,6 +21,7 @@ class ThreadPool;
  * - Work stealing pour load balancing
  * - Statistiques de performance
  * - Support du culling frustum (prochaine étape)
+ * - Support ImGui rendering
  */
 class AdvancedCommandRecorder
 {
@@ -32,6 +34,7 @@ public:
 
     /**
      * @brief Enregistre les command buffers en utilisant le thread pool
+     * @param imguiManager (Optionnel) Manager ImGui pour le rendu GUI
      */
     void record(
         uint32_t frameIndex,
@@ -40,7 +43,8 @@ public:
         Pipeline *pipeline,
         SwapChain *swapChain,
         DescriptorPool *descriptorPool,
-        Scene *scene);
+        Scene *scene,
+        ImGuiManager *imguiManager = nullptr);
 
     VkCommandBuffer getPrimaryCommandBuffer(uint32_t frameIndex) const
     {
@@ -68,6 +72,10 @@ private:
     std::vector<VkCommandBuffer> m_primaryCommandBuffers;
     std::vector<VkCommandPool> m_secondaryCommandPools;
     std::vector<VkCommandBuffer> m_secondaryCommandBuffers;
+    
+    // Command pool et buffers pour ImGui (un par frame)
+    VkCommandPool m_imguiCommandPool;
+    std::vector<VkCommandBuffer> m_imguiCommandBuffers;
 
     // Statistiques
     Stats m_stats;

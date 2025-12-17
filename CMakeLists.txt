@@ -70,6 +70,19 @@ set(UTILS_SOURCES
     src/utils/ShaderLoader.cpp
     src/utils/VulkanUtils.cpp
     src/utils/ModelLoader.cpp
+    src/utils/ImGuiManager.cpp
+    src/utils/StatsWindow.cpp
+)
+
+# Liste des fichiers sources - ImGui
+set(IMGUI_SOURCES
+    src/utils/external/imgui/imgui.cpp
+    src/utils/external/imgui/imgui_demo.cpp
+    src/utils/external/imgui/imgui_draw.cpp
+    src/utils/external/imgui/imgui_tables.cpp
+    src/utils/external/imgui/imgui_widgets.cpp
+    src/utils/external/imgui/backends/imgui_impl_glfw.cpp
+    src/utils/external/imgui/backends/imgui_impl_vulkan.cpp
 )
 
 # Liste des fichiers headers (optionnel, pour IDEs)
@@ -115,6 +128,17 @@ set(UTILS_HEADERS
     src/utils/ShaderLoader.hpp
     src/utils/VulkanUtils.hpp
     src/utils/ModelLoader.hpp
+    src/utils/ImGuiManager.hpp
+    src/utils/ImGuiWindow.hpp
+    src/utils/StatsWindow.hpp
+)
+
+# ImGui headers
+set(IMGUI_HEADERS
+    src/utils/external/imgui/imgui.h
+    src/utils/external/imgui/imconfig.h
+    src/utils/external/imgui/backends/imgui_impl_glfw.h
+    src/utils/external/imgui/backends/imgui_impl_vulkan.h
 )
 
 set(RENDERING_TEXTURE_SOURCES
@@ -136,6 +160,7 @@ set(SOURCES
     ${RENDERING_DESCRIPTOR_SOURCES}
     ${RENDERING_TEXTURE_SOURCES} 
     ${UTILS_SOURCES}
+    ${IMGUI_SOURCES}
 )
 
 set(HEADERS
@@ -145,6 +170,7 @@ set(HEADERS
     ${RENDERING_DESCRIPTOR_HEADERS}
     ${RENDERING_TEXTURE_HEADERS}
     ${UTILS_HEADERS}
+    ${IMGUI_HEADERS}
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
