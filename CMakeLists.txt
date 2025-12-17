@@ -72,6 +72,7 @@ set(UTILS_SOURCES
     src/utils/ModelLoader.cpp
     src/utils/ImGuiManager.cpp
     src/utils/StatsWindow.cpp
+    src/utils/SceneInspector.cpp
 )
 
 # Liste des fichiers sources - ImGui

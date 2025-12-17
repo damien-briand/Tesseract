@@ -24,6 +24,7 @@
 
 #include "utils/ImGuiManager.hpp"
 #include "utils/StatsWindow.hpp"
+#include "utils/SceneInspector.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -84,6 +85,7 @@ private:
     // ImGui
     ImGuiManager *m_imguiManager = nullptr;
     StatsWindow *m_statsWindow = nullptr;
+    SceneInspector *m_sceneInspector = nullptr;
 
     // Statistiques
     float m_fps = 0.0f;
@@ -163,9 +165,12 @@ private:
         // Donner ImGuiManager au Renderer
         m_renderer->setImGuiManager(m_imguiManager);
 
-        // Créer et ajouter la fenêtre de stats
+        // Créer et ajouter les fenêtres ImGui
         m_statsWindow = new StatsWindow(m_commandRecorder, m_lightManager, m_scene);
         m_imguiManager->addWindow(std::unique_ptr<ImGuiWindow>(m_statsWindow));
+
+        m_sceneInspector = new SceneInspector(m_scene);
+        m_imguiManager->addWindow(std::unique_ptr<ImGuiWindow>(m_sceneInspector));
 
         printSummary();
     }
@@ -318,6 +323,7 @@ private:
 
         delete m_imguiManager;  // Nettoyer ImGui en premier (doit être avant le renderPass)
         m_statsWindow = nullptr;  // Déjà détruit par m_imguiManager
+        m_sceneInspector = nullptr;  // Déjà détruit par m_imguiManager
 
         delete m_renderer;
         delete m_scene;
