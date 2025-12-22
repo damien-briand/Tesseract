@@ -23,7 +23,7 @@ public:
 
     /**
      * @brief Méthode à implémenter pour dessiner le contenu de la fenêtre
-     * Appelé automatiquement chaque frame si la fenêtre est visible
+     * Appelée automatiquement chaque frame si la fenêtre est visible
      */
     virtual void render() = 0;
 

@@ -7,7 +7,7 @@
 #include "../core/ThreadPool.hpp"
 #include "../scene/Scene.hpp"
 #include "../scene/GameObject.hpp"
-#include "../utils/ImGuiManager.hpp"
+#include "../ui/ImGuiManager.hpp"
 #include <stdexcept>
 #include <iostream>
 #include <array>

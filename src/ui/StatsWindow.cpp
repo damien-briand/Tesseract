@@ -2,7 +2,7 @@
 #include "rendering/AdvancedCommandRecorder.hpp"
 #include "scene/LightManager.hpp"
 #include "scene/Scene.hpp"
-#include "external/imgui/imgui.h"
+#include "../utils/external/imgui/imgui.h"
 
 StatsWindow::StatsWindow(AdvancedCommandRecorder* commandRecorder,
                          LightManager* lightManager,

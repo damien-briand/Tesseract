@@ -22,9 +22,9 @@
 #include "scene/Light.hpp"       
 #include "scene/LightManager.hpp"
 
-#include "utils/ImGuiManager.hpp"
-#include "utils/StatsWindow.hpp"
-#include "utils/SceneInspector.hpp"
+#include "ui/ImGuiManager.hpp"
+#include "ui/StatsWindow.hpp"
+#include "ui/SceneInspector.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -294,13 +294,15 @@ private:
 
                 const auto &stats = m_commandRecorder->getStats();
 
+                /*
                 std::cout << "\r"
-                          << "FPS:  " << std::setw(6) << std::fixed << std::setprecision(1) << m_fps
-                          << " | Frame:  " << std::setw(5) << std::setprecision(2) << m_frameTime << "ms"
-                          << " | Objects: " << std::setw(4) << stats.objectsRendered
-                          << " | Lights: " << std::setw(2) << m_lightManager->getLightCount()
-                          << " | Threads: " << stats.threadsUsed
-                          << std::flush;
+                << "FPS:  " << std::setw(6) << std::fixed << std::setprecision(1) << m_fps
+                << " | Frame:  " << std::setw(5) << std::setprecision(2) << m_frameTime << "ms"
+                << " | Objects: " << std::setw(4) << stats.objectsRendered
+                << " | Lights: " << std::setw(2) << m_lightManager->getLightCount()
+                << " | Threads: " << stats.threadsUsed
+                << std::flush;
+                */
 
                 m_frameCount = 0;
                 lastFPSTime = currentTime;

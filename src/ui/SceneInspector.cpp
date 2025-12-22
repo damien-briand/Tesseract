@@ -1,7 +1,7 @@
 #include "SceneInspector.hpp"
 #include "scene/Scene.hpp"
 #include "scene/GameObject.hpp"
-#include "external/imgui/imgui.h"
+#include "../utils/external/imgui/imgui.h"
 
 #include <glm/glm.hpp>
 

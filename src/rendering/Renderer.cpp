@@ -13,7 +13,7 @@
 #include "../core/Camera.hpp"
 #include "../scene/Scene.hpp"
 #include "../scene/LightManager.hpp"
-#include "../utils/ImGuiManager.hpp"
+#include "../ui/ImGuiManager.hpp"
 #include <stdexcept>
 #include <limits>
 #include <glm/glm.hpp>

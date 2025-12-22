@@ -5,9 +5,9 @@
 #include "core/Instance.hpp"
 #include "rendering/RenderPass.hpp"
 
-#include "external/imgui/imgui.h"
-#include "external/imgui/backends/imgui_impl_glfw.h"
-#include "external/imgui/backends/imgui_impl_vulkan.h"
+#include "../utils/external/imgui/imgui.h"
+#include "../utils/external/imgui/backends/imgui_impl_glfw.h"
+#include "../utils/external/imgui/backends/imgui_impl_vulkan.h"
 
 #include <GLFW/glfw3.h>
 #include <stdexcept>
@@ -21,9 +21,9 @@ ImGuiManager::ImGuiManager(Instance* instance, Device* device, Window* window,
     , m_renderPass(renderPass)
     , m_imguiDescriptorPool(VK_NULL_HANDLE)
 {
-    std::cout << "\n╔════════════════════════════════════════════════════════╗" << std::endl;
+    std::cout << "\n╔══════════════════════════════════════════════════════════╗" << std::endl;
     std::cout << "║              IMGUI INITIALIZATION                      ║" << std::endl;
-    std::cout << "╚════════════════════════════════════════════════════════╝\n" << std::endl;
+    std::cout << "╚══════════════════════════════════════════════════════════╝\n" << std::endl;
 
     // 1. Créer le descriptor pool pour ImGui
     createDescriptorPool(imageCount);
