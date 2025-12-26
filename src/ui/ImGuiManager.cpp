@@ -112,6 +112,21 @@ void ImGuiManager::beginFrame()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    // Barre de menu principale
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Fenêtres")) {
+            for (auto& window : m_windows) {
+                const std::string& winName = window->getName();
+                bool isVisible = window->isVisible();
+                if (ImGui::MenuItem(winName.c_str(), nullptr, isVisible)) {
+                    setWindowVisible(winName, !isVisible);
+                }
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
     // Render toutes les fenêtres actives
     for (auto& window : m_windows)
     {
@@ -131,7 +146,10 @@ void ImGuiManager::endFrame(VkCommandBuffer commandBuffer)
 
 void ImGuiManager::addWindow(std::unique_ptr<ImGuiWindow> window)
 {
-    m_windows.push_back(std::move(window));
+    if (window) {
+        window->setVisible(false);
+        m_windows.push_back(std::move(window));
+    }
 }
 
 void ImGuiManager::removeWindow(const std::string& name)
