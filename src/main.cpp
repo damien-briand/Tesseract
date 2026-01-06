@@ -135,7 +135,8 @@ private:
                            m_swapChain->getExtent(),
                            SHADERS_PATH + "gizmo_vert.spv",
                            SHADERS_PATH + "gizmo_frag.spv",
-                           m_msaaSamples);
+                           m_msaaSamples,
+                           false, false); // depthTest=false, depthWrite=false
 
         m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT, m_gizmoPipeline);
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
@@ -160,7 +161,7 @@ private:
         createLargeScene();
         
         // Créer un gizmo d'axes à l'origine
-        m_scene->createAxisGizmo(m_material, 2.0f, 0.03f);
+        m_scene->createAxisGizmo(m_material, 1.0f, 0.02f);
 
         // Créer le renderer AVEC le light manager (sans ImGui d'abord)
         m_renderer = new Renderer(m_device, m_swapChain, m_window,
