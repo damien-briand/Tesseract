@@ -29,6 +29,10 @@ compile_shaders() {
     mkdir -p src/shaders/spv
     /usr/local/bin/glslc src/shaders/shader.vert -o src/shaders/spv/vert.spv
     /usr/local/bin/glslc src/shaders/shader.frag -o src/shaders/spv/frag.spv
+
+    /usr/local/bin/glslc src/shaders/gizmo.vert -o src/shaders/spv/gizmo_vert.spv
+    /usr/local/bin/glslc src/shaders/gizmo.frag -o src/shaders/spv/gizmo_frag.spv
+
     echo -e "${GREEN}✓ Shaders compilés avec succès${NC}"
 }
 

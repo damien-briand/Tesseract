@@ -70,6 +70,7 @@ set(UTILS_SOURCES
     src/utils/ShaderLoader.cpp
     src/utils/VulkanUtils.cpp
     src/utils/ModelLoader.cpp
+    src/utils/PrimitiveGenerator.cpp
 )
 
 # Liste des fichiers sources - ImGui
@@ -132,6 +133,7 @@ set(UTILS_HEADERS
     src/utils/ShaderLoader.hpp
     src/utils/VulkanUtils.hpp
     src/utils/ModelLoader.hpp
+    src/utils/PrimitiveGenerator.hpp
 )
 
 set(UI_HEADERS

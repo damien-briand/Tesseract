@@ -67,7 +67,8 @@ private:
     // Rendering objects
     RenderPass *m_renderPass = nullptr;
     DescriptorSetLayout *m_descriptorSetLayout = nullptr;
-    Pipeline *m_pipeline = nullptr;
+    Pipeline *m_pipeline = nullptr; // PBR pipeline
+    Pipeline *m_gizmoPipeline = nullptr; // Unlit pipeline for gizmo
     AdvancedCommandRecorder *m_commandRecorder = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
     Material *m_material = nullptr;
@@ -121,13 +122,22 @@ private:
 
         m_descriptorSetLayout = new DescriptorSetLayout(m_device);
 
-        m_pipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
-                                  m_swapChain->getExtent(),
-                                  SHADERS_PATH + "vert.spv",
-                                  SHADERS_PATH + "frag.spv",
-                                  m_msaaSamples);
 
-        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT);
+        // Pipeline PBR
+        m_pipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
+                      m_swapChain->getExtent(),
+                      SHADERS_PATH + "vert.spv",
+                      SHADERS_PATH + "frag.spv",
+                      m_msaaSamples);
+
+        // Pipeline unlit pour le gizmo
+        m_gizmoPipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
+                           m_swapChain->getExtent(),
+                           SHADERS_PATH + "gizmo_vert.spv",
+                           SHADERS_PATH + "gizmo_frag.spv",
+                           m_msaaSamples);
+
+        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT, m_gizmoPipeline);
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
         m_material = new Material(m_device,
                                   "../assets/models/Cube/Color.png",
@@ -148,14 +158,17 @@ private:
         // Créer la scène
         m_scene = new Scene(m_device);
         createLargeScene();
+        
+        // Créer un gizmo d'axes à l'origine
+        m_scene->createAxisGizmo(m_material, 2.0f, 0.03f);
 
         // Créer le renderer AVEC le light manager (sans ImGui d'abord)
         m_renderer = new Renderer(m_device, m_swapChain, m_window,
-                                  m_renderPass, m_pipeline, m_commandRecorder,
-                                  m_uniformBuffer, m_descriptorPool,
-                                  m_msaaBuffer, m_depthBuffer,
-                                  MAX_FRAMES_IN_FLIGHT, m_camera, m_scene,
-                                  m_lightManager, nullptr); 
+                      m_renderPass, m_pipeline, m_gizmoPipeline, m_commandRecorder,
+                      m_uniformBuffer, m_descriptorPool,
+                      m_msaaBuffer, m_depthBuffer,
+                      MAX_FRAMES_IN_FLIGHT, m_camera, m_scene,
+                      m_lightManager, nullptr); 
 
         // Initialiser ImGui (après le renderer)
         m_imguiManager = new ImGuiManager(m_instance, m_device, m_window,
@@ -335,6 +348,7 @@ private:
         delete m_uniformBuffer;
         delete m_commandRecorder;
         delete m_pipeline;
+        delete m_gizmoPipeline;
         delete m_descriptorSetLayout;
         delete m_renderPass;
         delete m_swapChain;

@@ -26,7 +26,7 @@ class ImGuiManager;
 class AdvancedCommandRecorder
 {
 public:
-    AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight);
+    AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight, Pipeline* gizmoPipeline);
     ~AdvancedCommandRecorder();
 
     AdvancedCommandRecorder(const AdvancedCommandRecorder &) = delete;
@@ -66,6 +66,8 @@ private:
     ThreadPool *m_threadPool;
     uint32_t m_framesInFlight;
     uint32_t m_threadCount;
+
+    Pipeline* m_gizmoPipeline; // Pipeline unlit pour le gizmo
 
     // Command pools et buffers
     VkCommandPool m_primaryCommandPool;

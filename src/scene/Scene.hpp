@@ -57,6 +57,15 @@ public:
      */
     size_t getObjectCount() const { return m_objects.size(); }
 
+    /**
+     * @brief Crée un gizmo d'axes 3D à l'origine (X=rouge, Y=vert, Z=bleu)
+     * @param material Matériau à utiliser pour le gizmo
+     * @param length Longueur des axes (par défaut 1.0)
+     * @param thickness Épaisseur des axes (par défaut 0.02)
+     * @return Pointeur vers le GameObject gizmo créé
+     */
+    GameObject* createAxisGizmo(class Material* material, float length = 1.0f, float thickness = 0.02f);
+
 private:
     Device* m_device;
     std::vector<std::unique_ptr<GameObject>> m_objects;

@@ -13,8 +13,8 @@
 #include <array>
 #include <chrono>
 
-AdvancedCommandRecorder::AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight)
-    : m_device(device), m_threadPool(threadPool), m_framesInFlight(framesInFlight), m_threadCount(static_cast<uint32_t>(threadPool->getThreadCount()))
+AdvancedCommandRecorder::AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight, Pipeline* gizmoPipeline)
+    : m_device(device), m_threadPool(threadPool), m_framesInFlight(framesInFlight), m_threadCount(static_cast<uint32_t>(threadPool->getThreadCount())), m_gizmoPipeline(gizmoPipeline)
 {
     createCommandPools();
     createCommandBuffers();
@@ -255,6 +255,15 @@ void AdvancedCommandRecorder::record(
         task.swapChain = swapChain;
         task.descriptorPool = descriptorPool;
         task.scene = scene;
+
+        // Si le batch contient le gizmo, utiliser le pipeline unlit
+        const auto &objects = scene->getObjects();
+        for (uint32_t i = objectStart; i < objectStart + objectCount && i < objects.size(); i++) {
+            if (objects[i]->getName() == "AxisGizmo") {
+                task.pipeline = m_gizmoPipeline;
+                break;
+            }
+        }
 
         tasks.push_back([this, task]()
                         { recordSecondaryCommandBuffer(task); });

@@ -24,7 +24,7 @@ class Renderer
 {
 public:
     Renderer(Device *device, SwapChain *swapChain, Window *window,
-             RenderPass *renderPass, Pipeline *pipeline,
+             RenderPass *renderPass, Pipeline *pipeline, Pipeline *gizmoPipeline,
              AdvancedCommandRecorder *commandRecorder,
              UniformBuffer *uniformBuffer,
              DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
@@ -51,7 +51,8 @@ private:
     SwapChain *m_swapChain;
     Window *m_window;
     RenderPass *m_renderPass;
-    Pipeline *m_pipeline;
+    Pipeline *m_pipeline; // PBR pipeline
+    Pipeline *m_gizmoPipeline; // Unlit pipeline
     AdvancedCommandRecorder *m_commandRecorder;
     UniformBuffer *m_uniformBuffer;
     DescriptorPool *m_descriptorPool;

@@ -20,24 +20,24 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 Renderer::Renderer(Device *device, SwapChain *swapChain, Window *window,
-                   RenderPass *renderPass, Pipeline *pipeline,
-                   AdvancedCommandRecorder *commandRecorder,
-                   UniformBuffer *uniformBuffer,
-                   DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
-                   DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
-                   Camera *camera, Scene *scene, LightManager *lightManager,
-                   ImGuiManager *imguiManager)
-    : m_device(device), m_swapChain(swapChain), m_window(window),
-      m_renderPass(renderPass), m_pipeline(pipeline),
-      m_commandRecorder(commandRecorder),
-      m_uniformBuffer(uniformBuffer),
-      m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
-      m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
-      m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
-      m_camera(camera), m_scene(scene), m_lightManager(lightManager),
-      m_imguiManager(imguiManager)
+                                     RenderPass *renderPass, Pipeline *pipeline, Pipeline *gizmoPipeline,
+                                     AdvancedCommandRecorder *commandRecorder,
+                                     UniformBuffer *uniformBuffer,
+                                     DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
+                                     DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
+                                     Camera *camera, Scene *scene, LightManager *lightManager,
+                                     ImGuiManager *imguiManager)
+        : m_device(device), m_swapChain(swapChain), m_window(window),
+            m_renderPass(renderPass), m_pipeline(pipeline), m_gizmoPipeline(gizmoPipeline),
+            m_commandRecorder(commandRecorder),
+            m_uniformBuffer(uniformBuffer),
+            m_descriptorPool(descriptorPool), m_msaaBuffer(msaaBuffer),
+            m_depthBuffer(depthBuffer), m_maxFramesInFlight(maxFramesInFlight),
+            m_currentFrame(0), m_startTime(std::chrono::high_resolution_clock::now()),
+            m_camera(camera), m_scene(scene), m_lightManager(lightManager),
+            m_imguiManager(imguiManager)
 {
-    createSyncObjects();
+        createSyncObjects();
 }
 
 Renderer::~Renderer()
