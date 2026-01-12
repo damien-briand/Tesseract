@@ -69,6 +69,7 @@ private:
     DescriptorSetLayout *m_descriptorSetLayout = nullptr;
     Pipeline *m_pipeline = nullptr; // PBR pipeline
     Pipeline *m_gizmoPipeline = nullptr; // Unlit pipeline for gizmo
+    Pipeline *m_gridPipeline = nullptr; // Unlit pipeline for grid
     AdvancedCommandRecorder *m_commandRecorder = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
     Material *m_material = nullptr;
@@ -130,6 +131,14 @@ private:
                       SHADERS_PATH + "frag.spv",
                       m_msaaSamples);
 
+        // Pipeline unlit pour la grille (depth test ON, depth write OFF)
+        m_gridPipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
+                   m_swapChain->getExtent(),
+                   SHADERS_PATH + "grid_vert.spv",
+                   SHADERS_PATH + "grid_frag.spv",
+                   m_msaaSamples,
+                   true, false); // depthTest=true, depthWrite=false
+
         // Pipeline unlit pour le gizmo
         m_gizmoPipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
                            m_swapChain->getExtent(),
@@ -138,7 +147,7 @@ private:
                            m_msaaSamples,
                            false, false); // depthTest=false, depthWrite=false
 
-        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT, m_gizmoPipeline);
+        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT, m_gizmoPipeline, m_gridPipeline);
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
         m_material = new Material(m_device,
                                   "../assets/models/Cube/Color.png",
@@ -159,7 +168,10 @@ private:
         // Créer la scène
         m_scene = new Scene(m_device);
         createLargeScene();
-        
+
+        // Créer la grille XZ (sol)
+        m_scene->createGridXZ(nullptr, 10000.0f);
+
         // Créer un gizmo d'axes à l'origine
         m_scene->createAxisGizmo(m_material, 1.0f, 0.02f);
 

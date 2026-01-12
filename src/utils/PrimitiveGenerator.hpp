@@ -6,7 +6,8 @@
 /**
  * @brief Générateur de géométries primitives (axes, cubes, sphères, etc.)
  */
-class PrimitiveGenerator {
+class PrimitiveGenerator
+{
 public:
     /**
      * @brief Génère un gizmo d'axes 3D (X=rouge, Y=vert, Z=bleu)
@@ -16,16 +17,16 @@ public:
      * @param indices [out] Indices du mesh
      */
     static void generateAxisGizmo(float length, float thickness,
-                                  std::vector<Vertex>& vertices,
-                                  std::vector<uint32_t>& indices);
+                                  std::vector<Vertex> &vertices,
+                                  std::vector<uint32_t> &indices);
 
     /**
      * @brief Génère un cube unitaire (1x1x1 centré à l'origine)
      * @param vertices [out] Vertices du mesh
      * @param indices [out] Indices du mesh
      */
-    static void generateCube(std::vector<Vertex>& vertices,
-                           std::vector<uint32_t>& indices);
+    static void generateCube(std::vector<Vertex> &vertices,
+                             std::vector<uint32_t> &indices);
 
     /**
      * @brief Génère une sphère UV
@@ -35,8 +36,16 @@ public:
      * @param indices [out] Indices du mesh
      */
     static void generateSphere(float radius, int segments,
-                              std::vector<Vertex>& vertices,
-                              std::vector<uint32_t>& indices);
+                               std::vector<Vertex> &vertices,
+                               std::vector<uint32_t> &indices);
+
+    /**
+     * @brief Génère un quad sur le plan XZ centré à l'origine
+     * @param size Taille du quad (longueur d'un côté)
+     * @param vertices [out] Vertices du mesh
+     * @param indices [out] Indices du mesh
+     */
+    static void generateXZQuad(float size, std::vector<Vertex> &vertices, std::vector<uint32_t> &indices);
 
 private:
     /**
@@ -49,9 +58,9 @@ private:
      * @param vertices [out] Vertices du mesh
      * @param indices [out] Indices du mesh
      */
-    static void generateCylinder(const glm::vec3& start, const glm::vec3& end,
-                                float radius, const glm::vec3& color,
-                                int segments,
-                                std::vector<Vertex>& vertices,
-                                std::vector<uint32_t>& indices);
+    static void generateCylinder(const glm::vec3 &start, const glm::vec3 &end,
+                                 float radius, const glm::vec3 &color,
+                                 int segments,
+                                 std::vector<Vertex> &vertices,
+                                 std::vector<uint32_t> &indices);
 };

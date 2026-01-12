@@ -70,3 +70,14 @@ GameObject* Scene::createAxisGizmo(Material* material, float length, float thick
     
     return gizmo;
 }
+
+GameObject* Scene::createGridXZ(Material* material, float size) {
+    GameObject* grid = createGameObject("GridXZ");
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    PrimitiveGenerator::generateXZQuad(size, vertices, indices);
+    grid->setMesh(vertices, indices);
+    if (material) grid->setMaterial(material);
+    grid->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    return grid;
+}

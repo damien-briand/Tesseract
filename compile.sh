@@ -33,6 +33,9 @@ compile_shaders() {
     /usr/local/bin/glslc src/shaders/gizmo.vert -o src/shaders/spv/gizmo_vert.spv
     /usr/local/bin/glslc src/shaders/gizmo.frag -o src/shaders/spv/gizmo_frag.spv
 
+    /usr/local/bin/glslc src/shaders/grid.vert -o src/shaders/spv/grid_vert.spv
+    /usr/local/bin/glslc src/shaders/grid.frag -o src/shaders/spv/grid_frag.spv
+
     echo -e "${GREEN}✓ Shaders compilés avec succès${NC}"
 }
 

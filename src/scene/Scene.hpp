@@ -11,34 +11,35 @@ class Device;
 /**
  * @brief Gère une collection d'objets 3D (scene graph simple)
  */
-class Scene {
+class Scene
+{
 public:
-    Scene(Device* device);
+    Scene(Device *device);
     ~Scene();
 
     // Suppression de la copie
-    Scene(const Scene&) = delete;
-    Scene& operator=(const Scene&) = delete;
+    Scene(const Scene &) = delete;
+    Scene &operator=(const Scene &) = delete;
 
     /**
      * @brief Crée un nouvel objet dans la scène
      * @param name Nom de l'objet
      * @return Pointeur vers le GameObject créé
      */
-    GameObject* createGameObject(const std::string& name);
+    GameObject *createGameObject(const std::string &name);
 
     /**
      * @brief Trouve un objet par son nom
      * @param name Nom de l'objet
      * @return Pointeur vers l'objet ou nullptr
      */
-    GameObject* findObjectByName(const std::string& name);
+    GameObject *findObjectByName(const std::string &name);
 
     /**
      * @brief Supprime un objet de la scène
      * @param name Nom de l'objet à supprimer
      */
-    void removeObject(const std::string& name);
+    void removeObject(const std::string &name);
 
     /**
      * @brief Dessine tous les objets visibles de la scène
@@ -50,7 +51,7 @@ public:
     /**
      * @brief Retourne tous les GameObjects
      */
-    const std::vector<std::unique_ptr<GameObject>>& getObjects() const { return m_objects; }
+    const std::vector<std::unique_ptr<GameObject>> &getObjects() const { return m_objects; }
 
     /**
      * @brief Nombre d'objets dans la scène
@@ -64,9 +65,17 @@ public:
      * @param thickness Épaisseur des axes (par défaut 0.02)
      * @return Pointeur vers le GameObject gizmo créé
      */
-    GameObject* createAxisGizmo(class Material* material, float length = 1.0f, float thickness = 0.02f);
+    GameObject *createAxisGizmo(class Material *material, float length = 1.0f, float thickness = 0.02f);
+
+    /**
+     * @brief Crée une grille XZ infinie (quad très large, pour shader grille)
+     * @param material Matériau à utiliser (peut être nullptr si pipeline unlit)
+     * @param size Taille du quad (ex: 10000)
+     * @return Pointeur vers le GameObject créé
+     */
+    GameObject *createGridXZ(class Material *material, float size = 10000.0f);
 
 private:
-    Device* m_device;
+    Device *m_device;
     std::vector<std::unique_ptr<GameObject>> m_objects;
 };

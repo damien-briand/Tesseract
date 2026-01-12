@@ -13,8 +13,8 @@
 #include <array>
 #include <chrono>
 
-AdvancedCommandRecorder::AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight, Pipeline* gizmoPipeline)
-    : m_device(device), m_threadPool(threadPool), m_framesInFlight(framesInFlight), m_threadCount(static_cast<uint32_t>(threadPool->getThreadCount())), m_gizmoPipeline(gizmoPipeline)
+AdvancedCommandRecorder::AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight, Pipeline* gizmoPipeline, Pipeline* gridPipeline)
+    : m_device(device), m_threadPool(threadPool), m_framesInFlight(framesInFlight), m_threadCount(static_cast<uint32_t>(threadPool->getThreadCount())), m_gizmoPipeline(gizmoPipeline), m_gridPipeline(gridPipeline)
 {
     createCommandPools();
     createCommandBuffers();
@@ -380,8 +380,6 @@ void AdvancedCommandRecorder::recordSecondaryCommandBuffer(const RenderTask &tas
         throw std::runtime_error("Failed to begin secondary command buffer!");
     }
 
-    // Binder le pipeline
-    vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, task.pipeline->getHandle());
 
     // Viewport et scissor
     VkViewport viewport{};
@@ -400,16 +398,25 @@ void AdvancedCommandRecorder::recordSecondaryCommandBuffer(const RenderTask &tas
 
     // Binder descriptor set
     VkDescriptorSet descriptorSet = task.descriptorPool->getDescriptorSet(task.frameIndex);
-    vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            task.pipeline->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
 
-    // Dessiner les objets assignés
+    // Dessiner la grille d'abord si présente
     const auto &objects = task.scene->getObjects();
-    uint32_t objectEnd = std::min(task.objectStart + task.objectCount, static_cast<uint32_t>(objects.size()));
-
-    for (uint32_t i = task.objectStart; i < objectEnd; i++)
-    {
-        objects[i]->draw(cmdBuffer, task.pipeline->getLayout());
+    for (uint32_t i = task.objectStart; i < std::min(task.objectStart + task.objectCount, static_cast<uint32_t>(objects.size())); i++) {
+        if (objects[i]->getName() == "GridXZ") {
+            vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_gridPipeline->getHandle());
+            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                   m_gridPipeline->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
+            objects[i]->draw(cmdBuffer, m_gridPipeline->getLayout());
+        }
+    }
+    // Puis dessiner les autres objets
+    for (uint32_t i = task.objectStart; i < std::min(task.objectStart + task.objectCount, static_cast<uint32_t>(objects.size())); i++) {
+        if (objects[i]->getName() != "GridXZ") {
+            vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, task.pipeline->getHandle());
+            vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                   task.pipeline->getLayout(), 0, 1, &descriptorSet, 0, nullptr);
+            objects[i]->draw(cmdBuffer, task.pipeline->getLayout());
+        }
     }
 
     if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS)
