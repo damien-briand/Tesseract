@@ -13,7 +13,7 @@ Camera::Camera(const glm::vec3 &target, float distance, float aspectRatio)
       ,
       m_pitch(20.0f) // Légèrement de haut
       ,
-      m_worldUp(0.0f, 0.0f, 1.0f) // Z+ est "haut"
+    m_worldUp(0.0f, 1.0f, 0.0f) // Y+ est "haut"
       ,
       m_projectionMode(ProjectionMode::Perspective), m_fov(45.0f), m_orthoSize(5.0f), m_aspectRatio(aspectRatio), m_nearPlane(0.1f), m_farPlane(100.0f), m_rotationSpeed(0.3f), m_panSpeed(0.005f), m_zoomSpeed(0.5f), m_minDistance(0.5f), m_maxDistance(50.0f), m_isRotating(false), m_isPanning(false), m_lastMouseX(0.0), m_lastMouseY(0.0), m_firstMouse(true), m_keyPressCooldown(0.2f), m_timeSinceLastKeyPress(0.0f)
 {
@@ -230,11 +230,11 @@ void Camera::updateCameraVectors()
     float yawRad = glm::radians(m_yaw);
     float pitchRad = glm::radians(m_pitch);
 
-    // Position relative au pivot
+    // Pour Y+ up, on veut que la caméra orbite autour de Y
     glm::vec3 offset;
-    offset.x = m_distance * cos(pitchRad) * cos(yawRad);
-    offset.y = m_distance * cos(pitchRad) * sin(yawRad);
-    offset.z = m_distance * sin(pitchRad);
+    offset.x = m_distance * cos(pitchRad) * sin(yawRad); // X = r * cos(pitch) * sin(yaw)
+    offset.y = m_distance * sin(pitchRad);               // Y = r * sin(pitch)
+    offset.z = m_distance * cos(pitchRad) * cos(yawRad); // Z = r * cos(pitch) * cos(yaw)
 
     m_position = m_target + offset;
 
@@ -319,41 +319,41 @@ void Camera::updateAspectRatio(float width, float height)
 
 void Camera::setViewFront()
 {
-    m_yaw = -90.0f;
+    m_yaw = 0.0f;
     m_pitch = 0.0f;
     std::cout << "Front View (Numpad 1)" << std::endl;
 }
 
 void Camera::setViewRight()
 {
-    m_yaw = 0.0f;
+    m_yaw = 90.0f;
     m_pitch = 0.0f;
     std::cout << "Right View (Numpad 3)" << std::endl;
 }
 
 void Camera::setViewTop()
 {
-    m_yaw = -90.0f;
-    m_pitch = 89.0f; // Presque vertical pour éviter gimbal lock
+    m_yaw = 0.0f;
+    m_pitch = 90.0f; // Y+ parfaitement en haut
     std::cout << "Top View (Numpad 7)" << std::endl;
 }
 
 void Camera::setViewBack()
 {
-    m_yaw = 90.0f;
+    m_yaw = 180.0f;
     m_pitch = 0.0f;
 }
 
 void Camera::setViewLeft()
 {
-    m_yaw = 180.0f;
+    m_yaw = -90.0f;
     m_pitch = 0.0f;
 }
 
 void Camera::setViewBottom()
 {
-    m_yaw = -90.0f;
-    m_pitch = -89.0f;
+    m_yaw = 0.0f;
+    m_pitch = -90.0f; // Y- parfaitement en bas
 }
 
 void Camera::flipView()
@@ -371,13 +371,13 @@ void Camera::flipView()
 void Camera::rotateUp()
 {
     m_pitch += 15.0f;
-    m_pitch = std::clamp(m_pitch, -89.0f, 89.0f);
+    m_pitch = std::clamp(m_pitch, -90.0f, 90.0f);
 }
 
 void Camera::rotateDown()
 {
     m_pitch -= 15.0f;
-    m_pitch = std::clamp(m_pitch, -89.0f, 89.0f);
+    m_pitch = std::clamp(m_pitch, -90.0f, 90.0f);
 }
 
 void Camera::rotateLeft()

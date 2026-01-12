@@ -289,5 +289,5 @@ void PrimitiveGenerator::generateXZQuad(float size, std::vector<Vertex> &vertice
     vertices.push_back({glm::vec3(h, 0, h), color, glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)});
     vertices.push_back({glm::vec3(-h, 0, h), color, glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0)});
     // 2 triangles
-    indices = {0, 1, 2, 2, 3, 0};
+    indices = {0, 2, 1, 2, 0, 3};
 }
