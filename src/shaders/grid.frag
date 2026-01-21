@@ -14,7 +14,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
 } ubo;
 
 // Paramètres de la grille
-const float GRID_STEP = 1.0;
+const float GRID_STEP = 2.0;
 const float GRID_FADE = 64.0;
 const float GRID_THICK = 0.5;
 const vec3 GRID_COLOR = vec3(0.3, 0.3, 0.3);
