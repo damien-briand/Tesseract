@@ -8,10 +8,11 @@
 
 Pipeline::Pipeline(Device *device, RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
                    VkExtent2D swapChainExtent, const std::string &vertShaderPath, const std::string &fragShaderPath,
-                   VkSampleCountFlagBits msaaSamples)
+                   VkSampleCountFlagBits msaaSamples,
+                   bool depthTest, bool depthWrite)
     : m_device(device), m_pipelineLayout(VK_NULL_HANDLE), m_graphicsPipeline(VK_NULL_HANDLE)
 {
-    createGraphicsPipeline(renderPass, descriptorSetLayout, swapChainExtent, vertShaderPath, fragShaderPath, msaaSamples);
+    createGraphicsPipeline(renderPass, descriptorSetLayout, swapChainExtent, vertShaderPath, fragShaderPath, msaaSamples, depthTest, depthWrite);
 }
 
 Pipeline::~Pipeline()
@@ -28,7 +29,8 @@ Pipeline::~Pipeline()
 
 void Pipeline::createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
                                       VkExtent2D swapChainExtent, const std::string &vertShaderPath,
-                                      const std::string &fragShaderPath, VkSampleCountFlagBits msaaSamples)
+                                      const std::string &fragShaderPath, VkSampleCountFlagBits msaaSamples,
+                                      bool depthTest, bool depthWrite)
 {
     VkShaderModule vertShaderModule = ShaderLoader::loadShader(m_device->getLogicalDevice(), vertShaderPath);
     VkShaderModule fragShaderModule = ShaderLoader::loadShader(m_device->getLogicalDevice(), fragShaderPath);
@@ -94,8 +96,8 @@ void Pipeline::createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayou
     // Depth Stencil State
     VkPipelineDepthStencilStateCreateInfo depthStencil{};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
-    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthTestEnable = depthTest ? VK_TRUE : VK_FALSE;
+    depthStencil.depthWriteEnable = depthWrite ? VK_TRUE : VK_FALSE;
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f;

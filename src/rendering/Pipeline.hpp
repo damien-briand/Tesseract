@@ -13,7 +13,8 @@ class Pipeline
 public:
     Pipeline(Device *device, RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
              VkExtent2D swapChainExtent, const std::string &vertShaderPath, const std::string &fragShaderPath,
-             VkSampleCountFlagBits msaaSamples);
+             VkSampleCountFlagBits msaaSamples,
+             bool depthTest = true, bool depthWrite = true);
     ~Pipeline();
 
     // Suppression de la copie
@@ -32,5 +33,6 @@ private:
 
     void createGraphicsPipeline(RenderPass *renderPass, DescriptorSetLayout *descriptorSetLayout,
                                 VkExtent2D swapChainExtent, const std::string &vertShaderPath,
-                                const std::string &fragShaderPath, VkSampleCountFlagBits msaaSamples);
+                                const std::string &fragShaderPath, VkSampleCountFlagBits msaaSamples,
+                                bool depthTest, bool depthWrite);
 };

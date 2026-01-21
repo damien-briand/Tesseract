@@ -18,17 +18,19 @@ class MSAABuffer;
 class Camera;
 class Scene;
 class LightManager;
+class ImGuiManager;
 
 class Renderer
 {
 public:
     Renderer(Device *device, SwapChain *swapChain, Window *window,
-             RenderPass *renderPass, Pipeline *pipeline,
+             RenderPass *renderPass, Pipeline *pipeline, Pipeline *gizmoPipeline,
              AdvancedCommandRecorder *commandRecorder,
              UniformBuffer *uniformBuffer,
              DescriptorPool *descriptorPool, MSAABuffer *msaaBuffer,
              DepthBuffer *depthBuffer, uint32_t maxFramesInFlight,
-             Camera *camera, Scene *scene, LightManager *lightManager);
+             Camera *camera, Scene *scene, LightManager *lightManager,
+             ImGuiManager *imguiManager = nullptr);
     ~Renderer();
 
     // Suppression de la copie
@@ -39,12 +41,18 @@ public:
     void drawFrame();
     void waitIdle();
 
+    /**
+     * @brief Définit le ImGuiManager (peut être appelé après construction)
+     */
+    void setImGuiManager(ImGuiManager *imguiManager) { m_imguiManager = imguiManager; }
+
 private:
     Device *m_device;
     SwapChain *m_swapChain;
     Window *m_window;
     RenderPass *m_renderPass;
-    Pipeline *m_pipeline;
+    Pipeline *m_pipeline; // PBR pipeline
+    Pipeline *m_gizmoPipeline; // Unlit pipeline
     AdvancedCommandRecorder *m_commandRecorder;
     UniformBuffer *m_uniformBuffer;
     DescriptorPool *m_descriptorPool;
@@ -53,6 +61,7 @@ private:
     Camera *m_camera;
     Scene *m_scene;
     LightManager *m_lightManager;
+    ImGuiManager *m_imguiManager;
 
     uint32_t m_maxFramesInFlight;
     uint32_t m_currentFrame;

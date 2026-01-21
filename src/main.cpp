@@ -22,6 +22,10 @@
 #include "scene/Light.hpp"       
 #include "scene/LightManager.hpp"
 
+#include "ui/ImGuiManager.hpp"
+#include "ui/StatsWindow.hpp"
+#include "ui/SceneInspector.hpp"
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -63,7 +67,9 @@ private:
     // Rendering objects
     RenderPass *m_renderPass = nullptr;
     DescriptorSetLayout *m_descriptorSetLayout = nullptr;
-    Pipeline *m_pipeline = nullptr;
+    Pipeline *m_pipeline = nullptr; // PBR pipeline
+    Pipeline *m_gizmoPipeline = nullptr; // Unlit pipeline for gizmo
+    Pipeline *m_gridPipeline = nullptr; // Unlit pipeline for grid
     AdvancedCommandRecorder *m_commandRecorder = nullptr;
     UniformBuffer *m_uniformBuffer = nullptr;
     Material *m_material = nullptr;
@@ -77,6 +83,11 @@ private:
     // Scene
     Scene *m_scene = nullptr;
     LightManager *m_lightManager = nullptr; 
+
+    // ImGui
+    ImGuiManager *m_imguiManager = nullptr;
+    StatsWindow *m_statsWindow = nullptr;
+    SceneInspector *m_sceneInspector = nullptr;
 
     // Statistiques
     float m_fps = 0.0f;
@@ -112,13 +123,31 @@ private:
 
         m_descriptorSetLayout = new DescriptorSetLayout(m_device);
 
-        m_pipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
-                                  m_swapChain->getExtent(),
-                                  SHADERS_PATH + "vert.spv",
-                                  SHADERS_PATH + "frag.spv",
-                                  m_msaaSamples);
 
-        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT);
+        // Pipeline PBR
+        m_pipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
+                      m_swapChain->getExtent(),
+                      SHADERS_PATH + "vert.spv",
+                      SHADERS_PATH + "frag.spv",
+                      m_msaaSamples);
+
+        // Pipeline unlit pour la grille (depth test ON, depth write OFF)
+        m_gridPipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
+                   m_swapChain->getExtent(),
+                   SHADERS_PATH + "grid_vert.spv",
+                   SHADERS_PATH + "grid_frag.spv",
+                   m_msaaSamples,
+                   true, false); // depthTest=true, depthWrite=false
+
+        // Pipeline unlit pour le gizmo
+        m_gizmoPipeline = new Pipeline(m_device, m_renderPass, m_descriptorSetLayout,
+                           m_swapChain->getExtent(),
+                           SHADERS_PATH + "gizmo_vert.spv",
+                           SHADERS_PATH + "gizmo_frag.spv",
+                           m_msaaSamples,
+                           false, false); // depthTest=false, depthWrite=false
+
+        m_commandRecorder = new AdvancedCommandRecorder(m_device, m_threadPool, MAX_FRAMES_IN_FLIGHT, m_gizmoPipeline, m_gridPipeline);
         m_uniformBuffer = new UniformBuffer(m_device, MAX_FRAMES_IN_FLIGHT);
         m_material = new Material(m_device,
                                   "../assets/models/Cube/Color.png",
@@ -140,13 +169,34 @@ private:
         m_scene = new Scene(m_device);
         createLargeScene();
 
-        // Créer le renderer AVEC le light manager
+        // Créer la grille XZ (sol)
+        m_scene->createGridXZ(nullptr, 10000.0f);
+
+        // Créer un gizmo d'axes à l'origine
+        m_scene->createAxisGizmo(m_material, 1.0f, 0.02f);
+
+        // Créer le renderer AVEC le light manager (sans ImGui d'abord)
         m_renderer = new Renderer(m_device, m_swapChain, m_window,
-                                  m_renderPass, m_pipeline, m_commandRecorder,
-                                  m_uniformBuffer, m_descriptorPool,
-                                  m_msaaBuffer, m_depthBuffer,
-                                  MAX_FRAMES_IN_FLIGHT, m_camera, m_scene,
-                                  m_lightManager); 
+                      m_renderPass, m_pipeline, m_gizmoPipeline, m_commandRecorder,
+                      m_uniformBuffer, m_descriptorPool,
+                      m_msaaBuffer, m_depthBuffer,
+                      MAX_FRAMES_IN_FLIGHT, m_camera, m_scene,
+                      m_lightManager, nullptr); 
+
+        // Initialiser ImGui (après le renderer)
+        m_imguiManager = new ImGuiManager(m_instance, m_device, m_window,
+                                          m_renderPass, MAX_FRAMES_IN_FLIGHT,
+                                          m_msaaSamples);
+
+        // Donner ImGuiManager au Renderer
+        m_renderer->setImGuiManager(m_imguiManager);
+
+        // Créer et ajouter les fenêtres ImGui
+        m_statsWindow = new StatsWindow(m_commandRecorder, m_lightManager, m_scene);
+        m_imguiManager->addWindow(std::unique_ptr<ImGuiWindow>(m_statsWindow));
+
+        m_sceneInspector = new SceneInspector(m_scene);
+        m_imguiManager->addWindow(std::unique_ptr<ImGuiWindow>(m_sceneInspector));
 
         printSummary();
     }
@@ -265,15 +315,20 @@ private:
                 m_fps = m_frameCount / timeSinceFPS;
                 m_frameTime = timeSinceFPS / m_frameCount * 1000.0f;
 
+                // Mettre à jour les stats ImGui
+                m_statsWindow->updateStats(m_fps, m_frameTime);
+
                 const auto &stats = m_commandRecorder->getStats();
 
+                /*
                 std::cout << "\r"
-                          << "FPS:  " << std::setw(6) << std::fixed << std::setprecision(1) << m_fps
-                          << " | Frame:  " << std::setw(5) << std::setprecision(2) << m_frameTime << "ms"
-                          << " | Objects: " << std::setw(4) << stats.objectsRendered
-                          << " | Lights: " << std::setw(2) << m_lightManager->getLightCount()
-                          << " | Threads: " << stats.threadsUsed
-                          << std::flush;
+                << "FPS:  " << std::setw(6) << std::fixed << std::setprecision(1) << m_fps
+                << " | Frame:  " << std::setw(5) << std::setprecision(2) << m_frameTime << "ms"
+                << " | Objects: " << std::setw(4) << stats.objectsRendered
+                << " | Lights: " << std::setw(2) << m_lightManager->getLightCount()
+                << " | Threads: " << stats.threadsUsed
+                << std::flush;
+                */
 
                 m_frameCount = 0;
                 lastFPSTime = currentTime;
@@ -294,6 +349,10 @@ private:
     {
         std::cout << "\nStarting cleanup..." << std::endl;
 
+        delete m_imguiManager;  // Nettoyer ImGui en premier (doit être avant le renderPass)
+        m_statsWindow = nullptr;  // Déjà détruit par m_imguiManager
+        m_sceneInspector = nullptr;  // Déjà détruit par m_imguiManager
+
         delete m_renderer;
         delete m_scene;
         delete m_lightManager; 
@@ -302,6 +361,7 @@ private:
         delete m_uniformBuffer;
         delete m_commandRecorder;
         delete m_pipeline;
+        delete m_gizmoPipeline;
         delete m_descriptorSetLayout;
         delete m_renderPass;
         delete m_swapChain;

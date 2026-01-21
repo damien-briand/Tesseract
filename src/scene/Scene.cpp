@@ -1,5 +1,6 @@
 #include "Scene.hpp"
 #include "GameObject.hpp"
+#include "../utils/PrimitiveGenerator.hpp"
 #include <algorithm>
 #include <iostream>
 
@@ -49,4 +50,34 @@ void Scene::drawAll(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayo
     for (auto& obj : m_objects) {
         obj->draw(commandBuffer, pipelineLayout);
     }
+}
+
+GameObject* Scene::createAxisGizmo(Material* material, float length, float thickness) {
+    std::cout << "Creating axis gizmo..." << std::endl;
+    
+    GameObject* gizmo = createGameObject("AxisGizmo");
+    
+    // Générer le mesh des axes
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    PrimitiveGenerator::generateAxisGizmo(length, thickness, vertices, indices);
+    
+    gizmo->setMesh(vertices, indices);
+    gizmo->setMaterial(material);
+    gizmo->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    
+    std::cout << "✓ Axis gizmo created (X=red, Y=green, Z=blue)" << std::endl;
+    
+    return gizmo;
+}
+
+GameObject* Scene::createGridXZ(Material* material, float size) {
+    GameObject* grid = createGameObject("GridXZ");
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    PrimitiveGenerator::generateXZQuad(size, vertices, indices);
+    grid->setMesh(vertices, indices);
+    if (material) grid->setMaterial(material);
+    grid->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    return grid;
 }

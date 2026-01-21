@@ -11,6 +11,7 @@ class SwapChain;
 class DescriptorPool;
 class Scene;
 class ThreadPool;
+class ImGuiManager;
 
 /**
  * @brief Enregistrement avancé de command buffers avec thread pool
@@ -20,11 +21,12 @@ class ThreadPool;
  * - Work stealing pour load balancing
  * - Statistiques de performance
  * - Support du culling frustum (prochaine étape)
+ * - Support ImGui rendering
  */
 class AdvancedCommandRecorder
 {
 public:
-    AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight);
+    AdvancedCommandRecorder(Device *device, ThreadPool *threadPool, uint32_t framesInFlight, Pipeline* gizmoPipeline, Pipeline* gridPipeline);
     ~AdvancedCommandRecorder();
 
     AdvancedCommandRecorder(const AdvancedCommandRecorder &) = delete;
@@ -32,6 +34,7 @@ public:
 
     /**
      * @brief Enregistre les command buffers en utilisant le thread pool
+     * @param imguiManager (Optionnel) Manager ImGui pour le rendu GUI
      */
     void record(
         uint32_t frameIndex,
@@ -40,7 +43,8 @@ public:
         Pipeline *pipeline,
         SwapChain *swapChain,
         DescriptorPool *descriptorPool,
-        Scene *scene);
+        Scene *scene,
+        ImGuiManager *imguiManager = nullptr);
 
     VkCommandBuffer getPrimaryCommandBuffer(uint32_t frameIndex) const
     {
@@ -63,11 +67,18 @@ private:
     uint32_t m_framesInFlight;
     uint32_t m_threadCount;
 
+    Pipeline* m_gizmoPipeline; // Pipeline unlit pour le gizmo
+    Pipeline* m_gridPipeline;  // Pipeline unlit pour la grille
+
     // Command pools et buffers
     VkCommandPool m_primaryCommandPool;
     std::vector<VkCommandBuffer> m_primaryCommandBuffers;
     std::vector<VkCommandPool> m_secondaryCommandPools;
     std::vector<VkCommandBuffer> m_secondaryCommandBuffers;
+    
+    // Command pool et buffers pour ImGui (un par frame)
+    VkCommandPool m_imguiCommandPool;
+    std::vector<VkCommandBuffer> m_imguiCommandBuffers;
 
     // Statistiques
     Stats m_stats;
